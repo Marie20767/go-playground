@@ -1,3 +1,7 @@
+// go mod init <module_name>
+// go mod tidy (checks if there is anything uninstalled in project/unused dependency)
+// go install (global)/go get <module_name>
+
 module github.com/Marie20767/go-playground
 
 go 1.24.5

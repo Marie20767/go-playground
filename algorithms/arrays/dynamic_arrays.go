@@ -1,57 +1,57 @@
 package dynamic_arrays
 
 type DynamicArray struct {
-	capacity int
-	size     int
-	data     []int
+	Capacity int
+	Size     int
+	Data     []int
 }
 
-func NewDynamicArray(capacity int) *DynamicArray {
+func NewDynamicArray(Capacity int) *DynamicArray {
 	return &DynamicArray{
-		capacity: capacity,
-		size:     0,
-		data:     make([]int, 0, capacity),
+		Capacity: Capacity,
+		Size:     0,
+		Data:     make([]int, 0, Capacity),
 	}
 }
 
 func (array *DynamicArray) Get(index int) int {
-	return array.data[index]
+	return array.Data[index]
 }
 
 func (array *DynamicArray) GetSize() int {
-	return array.size
+	return array.Size
 }
 
 func (array *DynamicArray) Pushback(element int) {
-	if array.size == array.capacity {
+	if array.Size == array.Capacity {
 		array.Resize()
 	}
 
-	array.data = append(array.data, element)
-	array.size++
+	array.Data = append(array.Data, element)
+	array.Size++
 }
 
 func (array *DynamicArray) Popback() int {
-	lastElement := array.data[array.size-1]
+	lastElement := array.Data[array.Size-1]
 
-	array.data = array.data[:array.size-1]
-	array.size--
+	array.Data = array.Data[:array.Size-1]
+	array.Size--
 
 	return lastElement
 }
 
 func (array *DynamicArray) Resize() {
-	array.capacity *= 2
+	array.Capacity *= 2
 
-	newData := make([]int, array.size, array.capacity)
-	copy(newData, array.data)
-	array.data = newData
+	newData := make([]int, array.Size, array.Capacity)
+	copy(newData, array.Data)
+	array.Data = newData
 }
 
 func (array *DynamicArray) GetCapacity() int {
-	return array.capacity
+	return array.Capacity
 }
 
 func (array *DynamicArray) Set(i int, n int) {
-	array.data[i] = n
+	array.Data[i] = n
 }
