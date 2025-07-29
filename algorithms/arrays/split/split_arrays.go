@@ -1,5 +1,7 @@
 package split
 
+import "math"
+
 func SplitTo3Elements(nums []int) [][]int {
 	if len(nums) == 0 {
 		return [][]int{}
@@ -11,7 +13,7 @@ func SplitTo3Elements(nums []int) [][]int {
 	for i, num := range nums {
 		currentChunk = append(currentChunk, num)
 
-		// Either the chunk is full or this is the last element
+		// either the chunk is full or this is the last element
 		if len(currentChunk) == 3 || i == len(nums)-1 {
 			split = append(split, currentChunk)
 			currentChunk = []int{}
@@ -21,18 +23,21 @@ func SplitTo3Elements(nums []int) [][]int {
 	return split
 }
 
-// func SplitTo3Chunks(nums []int) [][]int {
+func SplitTo3Chunks(nums []int) [][]int {
 
-// }
+	numElementsPerSlice := int(math.Ceil(float64(len(nums)) / 3))
 
-// new algo:
-// - split array into multiple arrays in chunks of 3, return those chunks as elements in a new array
+	var split [][]int
+	chunk := []int{}
 
-// example input:
-// [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+	for i, num := range nums {
+		chunk = append(chunk, num)
 
-// example output:
-// [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+		if len(chunk) == numElementsPerSlice || i == len(nums)-1 {
+			split = append(split, chunk)
+			chunk = []int{}
+		}
+	}
 
-// if the last one doesn't fit into 3, return however many are remaining in the last chunk e.g:
-// [1, 2, 3, 4] should output [[1, 2, 3], [4]]
+	return split
+}
