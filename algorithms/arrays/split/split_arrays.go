@@ -6,23 +6,15 @@ func SplitTo3Elements(nums []int) [][]int {
 	}
 
 	var split [][]int
+	currentChunk := []int{}
 
-	currentChunk := 0
-	counter := 0
+	for i, num := range nums {
+		currentChunk = append(currentChunk, num)
 
-	for _, num := range nums {
-		if counter == 3 {
-			currentChunk++
-			counter = 0
-		}
-
-		if counter == 0 {
-			split = append(split, []int{})
-		}
-
-		if counter < 3 {
-			split[currentChunk] = append(split[currentChunk], num)
-			counter++
+		// Either the chunk is full or this is the last element
+		if len(currentChunk) == 3 || i == len(nums)-1 {
+			split = append(split, currentChunk)
+			currentChunk = []int{}
 		}
 	}
 
