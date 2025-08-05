@@ -1,12 +1,17 @@
 package set
 
+import (
+	"strconv"
+	"strings"
+)
+
 type Set struct {
-	Data []int
+	Data map[int]struct{}
 }
 
 func NewSet(nums ...int) *Set {
 	newSet := &Set{
-		Data: make([]int, 0, len(nums)),
+		Data: make(map[int]struct{}),
 	}
 
 	newSet.Add(nums...)
@@ -15,38 +20,77 @@ func NewSet(nums ...int) *Set {
 }
 
 func (s *Set) Add(nums ...int) {
-	seen := make(map[int]bool)
-
-	for _, num := range s.Data {
-		seen[num] = true
-	}
-
 	for _, num := range nums {
-		if !seen[num] {
-			seen[num] = true
-			s.Data = append(s.Data, num)
-		}
+		s.Data[num] = struct{}{}
 	}
 }
 
 func (s *Set) Delete(num int) {
-	for i, n := range s.Data {
-		if n == num {
-			s.Data = append(s.Data[:i], s.Data[i+1:]...)
-		} 
+	delete(s.Data, num)
+}
+
+func (s *Set) Contains(num int) bool {
+	if _, exists := s.Data[num]; exists {
+		return true
+	} else {
+		return false
 	}
 }
 
-// create a Set data structure of ints with the following functionality:
+func (s *Set) Intersection(other *Set) *Set {
+	intersection := NewSet()
 
-// - Contains - takes an int as argument, returns true if that int is in the set, false if not
+	for num := range other.Data {
+		if _, exists := s.Data[num]; exists {
+			intersection.Data[num] = struct{}{}
+		}
+	}
 
-// - Intersection - takes another Set as an argument, returns a new Set that contains only the elements in the two sets, e.g. setA.Intersection(setB) => should return a new set with only elements in both setA AND setB
+	return intersection
+}
 
-// - Difference - like Intersection but setA.Difference(setB) => should return only elements that are in setA but NOT in setB
+func (s *Set) Difference(other *Set) *Set {
+	difference := NewSet()
 
-// - Union - like Intersection but setA.Difference(setB) => should return all elements that are in setA AND setB (but the resulting set should not contain any duplicates)
+	for num := range s.Data {
+		if _, exists := other.Data[num]; !exists {
+			difference.Data[num] = struct{}{}
+		}
+	}
 
-// - String - returns a string of the elements in the set in a nice format (e.g. pretty format for logging)
+	return difference
+}
 
-// - ToList - returns a slice of ints containing the elements from the set
+func (s *Set) Union(other *Set) *Set {
+	union := NewSet()
+
+	for num := range s.Data {
+		union.Add(num)
+	}
+
+	for num := range other.Data {
+		union.Add(num)
+	}
+
+	return union
+}
+
+func (s *Set) ToList() []int {
+	slice := make([]int, 0, len(s.Data))
+
+	for num := range s.Data {
+		slice = append(slice, num)
+	}
+
+	return slice
+}
+
+func (s *Set) String() string {
+	keys := make([]string, 0, len(s.Data))
+
+	for num := range s.Data {
+		keys = append(keys, strconv.Itoa(num))
+	}
+	
+	return strings.Join(keys, ", ")
+}
