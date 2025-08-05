@@ -30,11 +30,7 @@ func (s *Set) Delete(num int) {
 }
 
 func (s *Set) Contains(num int) bool {
-	if _, exists := s.Data[num]; exists {
-		return true
-	} else {
-		return false
-	}
+	_, exists := s.Data[num]; return exists
 }
 
 func (s *Set) Intersection(other *Set) *Set {
@@ -91,6 +87,6 @@ func (s *Set) String() string {
 	for num := range s.Data {
 		keys = append(keys, strconv.Itoa(num))
 	}
-	
+
 	return strings.Join(keys, ", ")
 }
