@@ -3,13 +3,13 @@ package caching_test
 import (
 	"testing"
 
-	"github.com/JDGarner/go-playground/algorithms/caching"
+	"github.com/Marie20767/go-playground/algorithms/caching"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLRUCache(t *testing.T) {
 	t.Run("items can be added to and retrieved from the cache", func(t *testing.T) {
-		cache := caching.NewLRUCache(3)
+		cache, _ := caching.NewLRUCache(3)
 
 		err := cache.Add("name", "Snowbell")
 		assert.NoError(t, err)
@@ -19,35 +19,41 @@ func TestLRUCache(t *testing.T) {
 		assert.Equal(t, "Snowbell", value)
 	})
 
+	t.Run("returns a cache capacity error when trying to create an empty cache", func(t *testing.T) {
+		_, err := caching.NewLRUCache(0)
+
+		assert.ErrorIs(t, err, caching.ErrCacheCapacity)
+	})
+
 	t.Run("returns a cache miss error when trying to get an item that is not in the cache", func(t *testing.T) {
-		cache := caching.NewLRUCache(3)
+		cache, _ := caching.NewLRUCache(3)
 
 		_, err := cache.Get("something")
-		assert.ErrorIs(t, err, caching.CacheMissError)
+		assert.ErrorIs(t, err, caching.ErrCacheMiss)
 	})
 
 	t.Run("items can be removed from the cache", func(t *testing.T) {
-		cache := caching.NewLRUCache(3)
+		cache, _ := caching.NewLRUCache(3)
 
-		_ = cache.Add("1", "one")
+		cache.Add("1", "one")
 		cache.Remove("1")
 
 		value, err := cache.Get("1")
 		assert.Equal(t, "", value)
-		assert.ErrorIs(t, err, caching.CacheMissError)
+		assert.ErrorIs(t, err, caching.ErrCacheMiss)
 	})
 
 	t.Run("if a key already exists in the cache, another item with the same key cannot be added", func(t *testing.T) {
-		cache := caching.NewLRUCache(3)
+		cache, _ := caching.NewLRUCache(3)
 
 		err := cache.Add("7892", "bacon")
 		assert.NoError(t, err)
 		err = cache.Add("7892", "tomato")
-		assert.ErrorIs(t, err, caching.CacheEntryAlreadyExistsError)
+		assert.ErrorIs(t, err, caching.ErrCacheEntryAlreadyExists)
 	})
 
 	t.Run("the least recently used/read item is removed from the cache when it is full", func(t *testing.T) {
-		cache := caching.NewLRUCache(3)
+		cache, _ := caching.NewLRUCache(3)
 
 		// Add items to the cache until it is full
 		err := cache.Add("1", "one")
@@ -60,9 +66,9 @@ func TestLRUCache(t *testing.T) {
 		assert.Equal(t, cache.Keys(), []string{"1", "2", "3"})
 
 		// Simulate accessing stuff from the cache in a certain order
-		_, _ = cache.Get("2") // "2" is the first item we read so it will end up being the least recently used
-		_, _ = cache.Get("1")
-		_, _ = cache.Get("3")
+		cache.Get("2") // "2" is the first item we read so it will end up being the least recently used
+		cache.Get("1")
+		cache.Get("3")
 
 		// Assert order of keys is now in order of usage recency
 		assert.Equal(t, []string{"2", "1", "3"}, cache.Keys())
@@ -76,6 +82,6 @@ func TestLRUCache(t *testing.T) {
 
 		// Assert that the 'Least Recently Used/Read' item is no longer in the cache
 		_, err = cache.Get("2")
-		assert.ErrorIs(t, err, caching.CacheMissError)
+		assert.ErrorIs(t, err, caching.ErrCacheMiss)
 	})
 }
