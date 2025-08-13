@@ -35,8 +35,8 @@ func TestLRUCache(t *testing.T) {
 	t.Run("items can be removed from the cache", func(t *testing.T) {
 		cache, _ := caching.NewLRUCache(3)
 
-		cache.Add("1", "one")
-		cache.Remove("1")
+		err := cache.Add("1", "lone")
+		assert.NoError(t, err)
 
 		value, err := cache.Get("1")
 		assert.Equal(t, "", value)
@@ -66,9 +66,12 @@ func TestLRUCache(t *testing.T) {
 		assert.Equal(t, cache.Keys(), []string{"1", "2", "3"})
 
 		// Simulate accessing stuff from the cache in a certain order
-		cache.Get("2") // "2" is the first item we read so it will end up being the least recently used
-		cache.Get("1")
-		cache.Get("3")
+		_, err = cache.Get("2") // "2" is the first item we read so it will end up being the least recently used
+		assert.NoError(t, err)
+		_, err = cache.Get("1")
+		assert.NoError(t, err)
+		_, err = cache.Get("3")
+		assert.NoError(t, err)
 
 		// Assert order of keys is now in order of usage recency
 		assert.Equal(t, []string{"2", "1", "3"}, cache.Keys())
