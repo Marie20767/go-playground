@@ -1,9 +1,9 @@
-package shift_test
+package alphabetstepper_test
 
 import (
 	"testing"
 
-	"github.com/Marie20767/go-playground/algorithms/strings"
+	"github.com/Marie20767/go-playground/algorithms/strings/alphabet_stepper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,7 +11,7 @@ func TestShift(t *testing.T) {
 	t.Run("should shift every letter in lowercase string to next letter", func(t *testing.T) {
 		s := "abcdzhj"
 		expected := "bcdeaik"
-		actual := shift.Shift(s)
+		actual := alphabetstepper.AlphabetStepper(s)
 
 		assert.Equal(t, expected, actual)
 	})
@@ -19,7 +19,7 @@ func TestShift(t *testing.T) {
 	t.Run("should shift every letter in mixed cased string to next letter", func(t *testing.T) {
 		s := "abcDzhJ"
 		expected := "bcdEaiK"
-		actual := shift.Shift(s)
+		actual := alphabetstepper.AlphabetStepper(s)
 
 		assert.Equal(t, expected, actual)
 	})

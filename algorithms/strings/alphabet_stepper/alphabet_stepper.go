@@ -1,6 +1,6 @@
-package shift
+package alphabetstepper
 
-func Shift(s string) string {
+func AlphabetStepper(s string) string {
 	shifted := []rune(s)
 
 	for i, char := range s {

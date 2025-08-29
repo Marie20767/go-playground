@@ -32,6 +32,14 @@ func TestPeakFinder(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 
+	t.Run("should return multiple peaks with negative num", func(t *testing.T) {
+		n := []int{-10, 1, 5, 100, 1, 1, 8, 999, 0, 55, 7}
+		expected := []int{100, 999, 55}
+		actual := peakfinder.PeakFinder(n)
+
+		assert.Equal(t, expected, actual)
+	})
+
 	t.Run("should return empty peak", func(t *testing.T) {
 		n := []int{0}
 		expected := []int{}
