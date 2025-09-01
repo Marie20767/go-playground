@@ -3,7 +3,7 @@ package peakfinder_test
 import (
 	"testing"
 
-	peakfinder "github.com/Marie20767/go-playground/algorithms/slices/peak_finder"
+	"github.com/Marie20767/go-playground/algorithms/slices/peak_finder"
 	"github.com/stretchr/testify/assert"
 )
 

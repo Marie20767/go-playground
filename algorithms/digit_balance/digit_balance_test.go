@@ -3,7 +3,7 @@ package digitbalance_test
 import (
 	"testing"
 
-	digitbalance "github.com/Marie20767/go-playground/algorithms/digit_balance"
+	"github.com/Marie20767/go-playground/algorithms/digit_balance"
 	"github.com/stretchr/testify/assert"
 )
 

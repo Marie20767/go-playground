@@ -3,7 +3,7 @@ package dynamic_arrays_test
 import (
 	"testing"
 
-	dynamic_arrays "github.com/Marie20767/go-playground/algorithms/slices"
+	"github.com/Marie20767/go-playground/algorithms/slices"
 	"github.com/stretchr/testify/assert"
 )
 
