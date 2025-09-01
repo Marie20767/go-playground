@@ -1,16 +1,17 @@
-package brackets_test
+package stacks_test
 
 import (
 	"testing"
 
-	"github.com/Marie20767/go-playground/algorithms/arrays/brackets"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Marie20767/go-playground/algorithms/slices/stacks"
 )
 
-func TestAreBracketsValid(t *testing.T) {
-	t.Run("should identify valid 1 valid bracket", func(t *testing.T) {
+func TestIsStackValid(t *testing.T) {
+	t.Run("should identify 1 valid bracket", func(t *testing.T) {
 		s := "[]"
-		actual := brackets.AreBracketsValid(s)
+		actual := stacks.IsStackValid(s)
 		expected := true
 
 		assert.Equal(t, expected, actual)
@@ -18,7 +19,7 @@ func TestAreBracketsValid(t *testing.T) {
 
 	t.Run("should identify multiple different valid brackets", func(t *testing.T) {
 		s := "([{}])"
-		actual := brackets.AreBracketsValid(s)
+		actual := stacks.IsStackValid(s)
 		expected := true
 
 		assert.Equal(t, expected, actual)
@@ -26,7 +27,7 @@ func TestAreBracketsValid(t *testing.T) {
 
 	t.Run("should identify multiple identical brackets", func(t *testing.T) {
 		s := "{{{{{{}}}}}}"
-		actual := brackets.AreBracketsValid(s)
+		actual := stacks.IsStackValid(s)
 		expected := true
 
 		assert.Equal(t, expected, actual)
@@ -35,7 +36,7 @@ func TestAreBracketsValid(t *testing.T) {
 	t.Run("should identify invalid bracket sequence", func(t *testing.T) {
 		s := "([)]"
 
-		actual := brackets.AreBracketsValid(s)
+		actual := stacks.IsStackValid(s)
 		expected := false
 
 		assert.Equal(t, expected, actual)

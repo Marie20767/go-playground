@@ -3,7 +3,7 @@ package split_test
 import (
 	"testing"
 
-	"github.com/Marie20767/go-playground/algorithms/arrays/split"
+	"github.com/Marie20767/go-playground/algorithms/slices/split"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,7 +40,7 @@ func TestSplitTo3Chunks(t *testing.T) {
 	t.Run("should split slice into 3 unequal chunks", func(t *testing.T) {
 		nums := []int{1, 2, 3, 4, 5}
 
-		expected := [][]int{{1, 2}, {3,4}, {5}}
+		expected := [][]int{{1, 2}, {3, 4}, {5}}
 		actual := split.SplitTo3Chunks(nums)
 
 		assert.Equal(t, expected, actual)

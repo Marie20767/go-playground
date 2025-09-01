@@ -3,18 +3,17 @@ package dynamic_arrays_test
 import (
 	"testing"
 
-	dynamic_arrays "github.com/Marie20767/go-playground/algorithms/arrays"
+	dynamic_arrays "github.com/Marie20767/go-playground/algorithms/slices"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDynamicArrays(t *testing.T) {	
+func TestDynamicArrays(t *testing.T) {
 	t.Run("should get element by index", func(t *testing.T) {
 		newArray := dynamic_arrays.NewDynamicArray(3)
 
 		newArray.Pushback(1)
 		newArray.Pushback(2)
 		newArray.Pushback(3)
-
 
 		expected := 2
 		actual := newArray.Get(1)
