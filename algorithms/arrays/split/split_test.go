@@ -3,7 +3,7 @@ package split_test
 import (
 	"testing"
 
-	"github.com/Marie20767/go-playground/algorithms/slices/split"
+	"github.com/Marie20767/go-playground/algorithms/arrays/split"
 	"github.com/stretchr/testify/assert"
 )
 

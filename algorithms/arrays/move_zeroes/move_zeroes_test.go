@@ -3,7 +3,7 @@ package movezeroes_test
 import (
 	"testing"
 
-	"github.com/Marie20767/go-playground/algorithms/slices/move_zeroes"
+	"github.com/Marie20767/go-playground/algorithms/arrays/move_zeroes"
 	"github.com/stretchr/testify/assert"
 )
 

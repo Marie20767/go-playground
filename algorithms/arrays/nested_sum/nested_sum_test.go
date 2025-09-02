@@ -3,7 +3,7 @@ package nestedsum_test
 import (
 	"testing"
 
-	"github.com/Marie20767/go-playground/algorithms/slices/nested_sum"
+	"github.com/Marie20767/go-playground/algorithms/arrays/nested_sum"
 	"github.com/stretchr/testify/assert"
 )
 
