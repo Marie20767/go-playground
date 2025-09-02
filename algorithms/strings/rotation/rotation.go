@@ -10,6 +10,7 @@ func rotate(s string) string {
 	return s[1:] + s[:1]
 }
 
+// time complexity: O(n²) as reassigning string is O(n)
 func IsRotation(s1 string, s2 string) bool {
 	if len(s1) != len(s2) {
 		return false
@@ -28,6 +29,7 @@ func IsRotation(s1 string, s2 string) bool {
 	return false
 }
 
+// time complexity O(n)
 func IsRotation2(s1 string, s2 string) bool {
 	if len(s1) != len(s2) {
 		return false
