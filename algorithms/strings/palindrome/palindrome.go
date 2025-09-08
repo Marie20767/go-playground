@@ -18,7 +18,7 @@ package palindrome
 // return palindromes
 // }
 
-func substrings(s string) []string {
+func getSubstrings(s string) []string {
 	// input: "abadd"
 	// output:
 	//    ["a", "ab", "aba", "abad", "abadd",
@@ -42,12 +42,12 @@ func substrings(s string) []string {
 	var substrings []string
 
 	for i := 0; i < len(s); i++ {
-		currentLetter := (string(s[i]))
+		currentLetter := string(s[i])
 		substrings = append(substrings, currentLetter)
 		prevSubstring := currentLetter
 
 		for j := i + 1; j < len(s); j++ {
-			newSubstring := prevSubstring+currentLetter
+			newSubstring := prevSubstring + string(s[j])
 			substrings = append(substrings, newSubstring)
 			prevSubstring = newSubstring
 		}
@@ -69,7 +69,7 @@ func isPalindrome(s string) bool {
 func PalindromeSubStrings(s string) []string {
 	palindromes := []string{}
 
-	for _, substring := range substrings(s) {
+	for _, substring := range getSubstrings(s) {
 		if isPalindrome(substring) {
 			palindromes = append(palindromes, substring)
 		}
