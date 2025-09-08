@@ -25,8 +25,16 @@ func TestDistinct(t *testing.T) {
 	})
 
 	t.Run("should identify longest distinct substring", func(t *testing.T) {
-		s := "aaxyzbb"
-		expected := "axyzb"
+		s := "axayazba"
+		expected := "yazb"
+		actual := distinct.LargestDistinct(s)
+
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("should identify longest distinct substring with distinct string", func(t *testing.T) {
+		s := "abcd"
+		expected := "abcd"
 		actual := distinct.LargestDistinct(s)
 
 		assert.Equal(t, expected, actual)
