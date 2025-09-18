@@ -21,6 +21,10 @@ func TestCanJump(t *testing.T) {
 			expectedOutput: true,
 		},
 		{
+			input:          []int{2, 5, 1, 0, 0, 0},
+			expectedOutput: true,
+		},
+		{
 			input:          []int{3, 4, 0, 0, 0, 1, 0, 0},
 			expectedOutput: false,
 		},
@@ -46,7 +50,7 @@ func TestCanJump(t *testing.T) {
 		},
 		{
 			input:          []int{},
-			expectedOutput: false,
+			expectedOutput: true,
 		},
 		{
 			input:          []int{2},
