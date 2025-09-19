@@ -10,12 +10,15 @@ func CanJump(nums []int) bool {
 		if i > maxReach {
 			return false
 		}
+
 		if i+jump > maxReach {
 			maxReach = i + jump
 		}
+		
 		if maxReach >= len(nums)-1 {
 			return true
 		}
 	}
+	
 	return true
 }
