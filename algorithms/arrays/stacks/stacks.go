@@ -1,7 +1,7 @@
 package stacks
 
 import (
-	"github.com/Marie20767/go-playground/data_structures/stack"
+	"github.com/Marie20767/go-playground/datastructures/stack"
 )
 
 func IsStackValid(s string) bool {
