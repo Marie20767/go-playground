@@ -17,9 +17,9 @@ func concurrencyExamples() {
 	// ***************************************
 	// concurrency.IntegerGeneratorExample()
 	// concurrency.DoubleGeneratorExample()
-	concurrency.StringGeneratorExample()
+	// concurrency.StringGeneratorExample()
 	// concurrency.TickerGeneratorExample()
-	// concurrency.FibGeneratorExample()
+	concurrency.FibGeneratorExample()
 
 	// ***************************************
 	// Misc

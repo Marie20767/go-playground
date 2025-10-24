@@ -44,7 +44,24 @@ func Strings(s ...string) <-chan string {
 	return ch
 }
 
-func Fibonacci() {
+// returns a read only channel that sends the fibonacci numbers into the channel
+func Fibonacci(done <-chan struct{}) <-chan int {
+	ch := make(chan int)
+	a, b := 0, 1
+
+	go func() {
+		defer close(ch)
+		for {
+			select {
+			case ch <- a:
+				a, b = b, a+b
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	return ch
 }
 
 func Ticker() {

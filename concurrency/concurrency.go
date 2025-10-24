@@ -19,7 +19,14 @@ func TickerWithDoneChannel() {
 }
 
 func FibGeneratorExample() {
+	done := make(chan struct{})
+	ch := generator.Fibonacci(done)
 
+	for range 10 {
+		fmt.Println(<-ch)
+	}
+
+	close(done)
 }
 
 func DoubleGeneratorExample() {
