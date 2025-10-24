@@ -1,0 +1,4 @@
+package fanin
+
+func New() {
+}
