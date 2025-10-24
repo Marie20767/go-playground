@@ -1,5 +1,7 @@
 package generator
 
+import "time"
+
 // takes an int (num), returns a read only channel
 // writes integers into the channel from 0 to num
 func Integer(num int) <-chan int {
@@ -64,7 +66,42 @@ func Fibonacci(done <-chan struct{}) <-chan int {
 	return ch
 }
 
-func Ticker() {
+// takes a time.Duration and returns a read only channel of time.Time
+// sends the current time.Time value into the channel every tick of the given time.Duration
+func Ticker(duration time.Duration) <-chan time.Time {
+	ticker := time.NewTicker(duration)
+	ch := make(chan time.Time)
+
+	go func() {
+		defer close(ch)
+		defer ticker.Stop()
+		for {
+			time := <-ticker.C
+			ch <- time
+		}
+	}()
+
+	return ch
+}
+
+func TickerWithDone(done <-chan struct{}, duration time.Duration) <-chan time.Time {
+	ticker := time.NewTicker(duration)
+	ch := make(chan time.Time)
+
+	go func() {
+		defer close(ch)
+		defer ticker.Stop()
+		for {
+			select {
+			case time := <-ticker.C:
+				ch <- time
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	return ch
 }
 
 func Cancellable() {

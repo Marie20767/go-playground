@@ -2,6 +2,7 @@ package concurrency
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Marie20767/go-playground/concurrency/generator"
 )
@@ -10,12 +11,25 @@ func FanInExample() {
 
 }
 
+// create a ticker generator that ticks every time.Second
+// make it tick for 4 seconds
 func TickerGeneratorExample() {
+	ch := generator.Ticker(time.Second)
 
+	for range 4 {
+		fmt.Println(<-ch)
+	}
 }
 
-func TickerWithDoneChannel() {
+func TickerGeneratorExampleWithDone() {
+	done := make(chan struct{})
+	ch := generator.TickerWithDone(done, time.Second)
 
+	for range 4 {
+		fmt.Println(<-ch)
+	}
+
+	close(done)
 }
 
 func FibGeneratorExample() {

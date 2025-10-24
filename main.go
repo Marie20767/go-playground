@@ -19,7 +19,8 @@ func concurrencyExamples() {
 	// concurrency.DoubleGeneratorExample()
 	// concurrency.StringGeneratorExample()
 	// concurrency.TickerGeneratorExample()
-	concurrency.FibGeneratorExample()
+	concurrency.TickerGeneratorExampleWithDone()
+	// concurrency.FibGeneratorExample()
 
 	// ***************************************
 	// Misc
