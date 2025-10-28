@@ -9,7 +9,7 @@ func FirstUnique(s string) int {
 
 	runeIndex := 0
 
-	// if looping over string, i is byte index not a position index!
+	// when ranging over string, i is byte index not a position index!
 	for _, char := range s {
 		if occurrences[char] == 1 {
 			return runeIndex
