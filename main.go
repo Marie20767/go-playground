@@ -10,7 +10,7 @@ func concurrencyExamples() {
 	// ***************************************
 	// Fan In Pattern
 	// ***************************************
-	// concurrency.FanInExample()
+	concurrency.FanInExample()
 
 	// ***************************************
 	// Generator Pattern
@@ -19,7 +19,7 @@ func concurrencyExamples() {
 	// concurrency.DoubleGeneratorExample()
 	// concurrency.StringGeneratorExample()
 	// concurrency.TickerGeneratorExample()
-	concurrency.TickerGeneratorExampleWithDone()
+	// concurrency.TickerGeneratorExampleWithDone()
 	// concurrency.FibGeneratorExample()
 
 	// ***************************************

@@ -1,6 +1,8 @@
 package generator
 
-import "time"
+import (
+	"time"
+)
 
 // takes an int (num), returns a read only channel
 // writes integers into the channel from 0 to num
