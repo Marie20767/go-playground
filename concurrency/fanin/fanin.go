@@ -10,14 +10,11 @@ func New(channels ...<-chan string) <-chan string {
 	var wg sync.WaitGroup
 
 	for _, channel := range channels {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-			for v := range channel {
-				output <- v
+		wg.Go(func() {
+			for s := range channel {
+				output <- s
 			}
-		}()
+		})
 	}
 
 	go func() {
@@ -26,4 +23,19 @@ func New(channels ...<-chan string) <-chan string {
 	}()
 
 	return output
+}
+
+func FanIn(inputs ...<-chan string) <-chan string {
+	c := make(chan string)
+	
+	// Start a goroutine for each input channel
+	for _, input := range inputs {
+			go func() {
+					for msg := range input {
+							c <- msg
+					}
+			}()
+	}
+	
+	return c
 }
