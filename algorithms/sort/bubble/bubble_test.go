@@ -1,4 +1,4 @@
-package bubblesort_test
+package bubble_test
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func TestBubbleSort(t *testing.T) {
 			inputCopy := make([]int, len(testcase.Input))
 			copy(inputCopy, testcase.Input)
 
-			bubblesort.BubbleSort(inputCopy)
+			bubble.BubbleSort(inputCopy)
 			if !slices.Equal(inputCopy, testcase.Expected) {
 				t.Fatalf("slices not equal: got %v, want %v", inputCopy, testcase.Expected)
 			}

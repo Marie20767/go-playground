@@ -1,4 +1,4 @@
-package mergesort
+package merge
 
 func mergeSortedLists(left, right []int) []int {
 	result := []int{}

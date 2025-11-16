@@ -1,4 +1,4 @@
-package mergesort_test
+package merge_test
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func TestMergeSort(t *testing.T) {
 			inputCopy := make([]int, len(testcase.Input))
 			copy(inputCopy, testcase.Input)
 
-			actual := mergesort.MergeSort(inputCopy)
+			actual := merge.MergeSort(inputCopy)
 			if !slices.Equal(actual, testcase.Expected) {
 				t.Fatalf("slices not equal: got %v, want %v", actual, testcase.Expected)
 			}
