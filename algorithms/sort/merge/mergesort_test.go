@@ -9,7 +9,7 @@ import (
 	"github.com/Marie20767/go-playground/algorithms/sort/merge"
 )
 
-func TestIMergeSort(t *testing.T) {
+func TestMergeSort(t *testing.T) {
 	for label, testcase := range helpers.SortingTestCases {
 		t.Run(fmt.Sprintf("merge sort: %s", label), func(t *testing.T) {
 			// Copy the input because the test data is shared among sorting tests
