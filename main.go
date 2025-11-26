@@ -10,7 +10,7 @@ func concurrencyExamples() {
 	// ***************************************
 	// Fan In Pattern
 	// ***************************************
-	concurrency.FanInExample()
+	// concurrency.FanInExample()
 
 	// ***************************************
 	// Generator Pattern
@@ -27,4 +27,6 @@ func concurrencyExamples() {
 	// ***************************************
 	// concurrency.TickerWithDoneChannel()
 	// concurrency.CancellableExample()
+	// concurrency.FirstResponseExample()
+	concurrency.AllResponsesExample()
 }
