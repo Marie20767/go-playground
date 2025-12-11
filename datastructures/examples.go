@@ -11,6 +11,6 @@ func BSTSearchExample() {
 
 	fmt.Println(bst)
 
-	bWithInsertion := bst.Insert(18)
-	fmt.Println(bWithInsertion)
+	isValid := bst.IsValid()
+	fmt.Println(isValid)
 }

@@ -1,6 +1,9 @@
 package binarysearchtree
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type BST struct {
 	Value int
@@ -35,7 +38,7 @@ func (b *BST) SetRight(v int) error {
 }
 
 func (b *BST) IsLeafNode() bool {
-	return b.Left != nil || b.Right != nil
+	return b.Left == nil && b.Right == nil
 }
 
 func (b *BST) FindMin() *BST {
@@ -84,22 +87,38 @@ func (b *BST) Insert(value int) *BST {
 	return b
 }
 
-func (b *BST) DFSTraversal(f func(value int)) {
-	// prints from smallest to largest
-	// example:
-	// 1 3 5 6 7 10
+// prints from smallest to largest
+// go through left most part of the tree and print value, go back up to parent print value go to right and start process again
+// example: 1 2 3 6 7 19
+func (b *BST) DFSTraversal() {
+	if b == nil {
+		return
+	}
 
-	// go as low as you can on the left
-	// print entire left subtree
-	// print parent
-	// check right
-	// print entire left subtree
-	// etc
+	b.Left.DFSTraversal()
+	fmt.Println(b.Value)
+	b.Right.DFSTraversal()
 }
 
+// go through tree and check if you have an invalid value on left/right e.g. left bigger than value or right smaller than value
 func (b *BST) IsValid() bool {
-	// go through tree and check if you have an invalid value on left/right e.g. left bigger than value or right smaller than value
-	return true
+	if b == nil || b.IsLeafNode() {
+		return true
+	}
+
+	if b.Left != nil && b.Value < b.Left.Value {
+		return false
+	}
+
+	if b.Right != nil && b.Value > b.Right.Value {
+		return false
+	}
+
+	if !b.Left.IsValid() {
+		return false
+	}
+
+	return b.Right.IsValid()
 }
 
 // pass array and create tree from that array
@@ -112,7 +131,7 @@ func newFromListHelper(data []int, start, end int) *BST {
 		return nil
 	}
 
-	midpoint := (end - start) / 2 + start
+	midpoint := (end-start)/2 + start
 	b := New(data[midpoint])
 	b.Left = newFromListHelper(data, start, midpoint-1)
 	b.Right = newFromListHelper(data, midpoint+1, end)
@@ -120,9 +139,13 @@ func newFromListHelper(data []int, start, end int) *BST {
 	return b
 }
 
-func (b *BST) Remove(value int) *BST {}
+// TODO: implement
+func (b *BST) Remove(value int) *BST {
+	return b
+}
 
-func (b *BST) BFSTraversal(f func(value int)) {
+// TODO: implement
+func (b *BST) BFSTraversal() {
 	// print level by level from left to right starting at the root
 	// example:
 	// 5 3 10 1 6 7
