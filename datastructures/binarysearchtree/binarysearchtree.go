@@ -144,9 +144,25 @@ func (b *BST) Remove(value int) *BST {
 	return b
 }
 
-// TODO: implement
+// print level by level from left to right starting at the root
+// example:
+// 5 3 10 1 6 7
 func (b *BST) BFSTraversal() {
-	// print level by level from left to right starting at the root
-	// example:
-	// 5 3 10 1 6 7
+	queue := []*BST{}
+	queue = append(queue, b)
+
+	for len(queue) > 0 {
+		first := queue[0]
+		queue = queue[1:]
+
+		fmt.Println(first.Value)
+
+		if first.Left != nil {
+			queue = append(queue, first.Left)
+		}
+
+		if first.Right != nil {
+			queue = append(queue, first.Right)
+		}
+	}
 }

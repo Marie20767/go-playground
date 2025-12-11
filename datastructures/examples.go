@@ -7,10 +7,9 @@ import (
 )
 
 func BSTSearchExample() {
-	bst := binarysearchtree.NewFromList([]int{1, 3, 6, 7, 19})
+	bst := binarysearchtree.NewFromList([]int{5, 3, 10, 1, 6, 7})
 
 	fmt.Println(bst)
 
-	isValid := bst.IsValid()
-	fmt.Println(isValid)
+	bst.BFSTraversal()
 }
