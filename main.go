@@ -1,32 +1,10 @@
 package main
 
-import "github.com/Marie20767/go-playground/concurrency"
+import (
+	"github.com/Marie20767/go-playground/datastructures"
+)
 
 func main() {
-	concurrencyExamples()
-}
-
-func concurrencyExamples() {
-	// ***************************************
-	// Fan In Pattern
-	// ***************************************
-	// concurrency.FanInExample()
-
-	// ***************************************
-	// Generator Pattern
-	// ***************************************
-	// concurrency.IntegerGeneratorExample()
-	// concurrency.DoubleGeneratorExample()
-	// concurrency.StringGeneratorExample()
-	// concurrency.TickerGeneratorExample()
-	// concurrency.TickerGeneratorExampleWithDone()
-	// concurrency.FibGeneratorExample()
-
-	// ***************************************
-	// Misc
-	// ***************************************
-	// concurrency.TickerWithDoneChannel()
-	// concurrency.CancellableExample()
-	// concurrency.FirstResponseExample()
-	concurrency.AllResponsesExample()
+	datastructures.BSTSearchExample()
+	// concurrency.ConcurrencyExamples()
 }
