@@ -57,7 +57,7 @@ var BucketSortingTestCases = map[string]testCase{
 		Input:    []int{40, 10, 10, 50, 30, 40, 20},
 		Expected: []int{10, 10, 20, 30, 40, 40, 50},
 	},
-	"sorting case 2": {
+	"sorting case 2 - empty slice": {
 		Input:    []int{},
 		Expected: []int{},
 	},
@@ -71,5 +71,21 @@ var BucketSortingInRangeTestCases = map[string]testCase{
 	"sorting case 2 - range not starting from 1": {
 		Input:    []int{100, 101, 116, 107, 111, 115, 115, 110, 106, 103, 100, 116, 104},
 		Expected: []int{100, 100, 101, 103, 104, 106, 107, 110, 111, 115, 115, 116, 116},
+	},
+	"sorting case 3 - empty slice": {
+		Input:    []int{},
+		Expected: []int{},
+	},
+	"sorting case 4": {
+		Input:    []int{2, 1},
+		Expected: []int{1, 2},
+	},
+		"sorting case 5 - duplicates and negatives": {
+		Input:    []int{-1, 5, 3, -1, 5},
+		Expected: []int{-1, -1, 3, 5, 5},
+	},
+		"sorting case 6 - all equal elements": {
+		Input:    []int{8, 8, 8, 8},
+		Expected: []int{8, 8, 8, 8},
 	},
 }
