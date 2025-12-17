@@ -51,3 +51,25 @@ var SortingTestCases = map[string]testCase{
 		Expected: []int{100, 100, 101, 103, 104, 106, 107, 110, 111, 115, 115, 116, 116},
 	},
 }
+
+var BucketSortingTestCases = map[string]testCase{
+	"sorting case 1": {
+		Input:    []int{40, 10, 10, 50, 30, 40, 20},
+		Expected: []int{10, 10, 20, 30, 40, 40, 50},
+	},
+	"sorting case 2": {
+		Input:    []int{},
+		Expected: []int{},
+	},
+}
+
+var BucketSortingInRangeTestCases = map[string]testCase{
+	"sorting case 1 - elements with many duplicates": {
+		Input:    []int{6, 4, 1, 2, 3, 9, 10, 5, 6, 4, 4, 2, 3, 1, 5, 8, 3, 2, 9, 10, 1},
+		Expected: []int{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 8, 9, 9, 10, 10},
+	},
+	"sorting case 2 - range not starting from 1": {
+		Input:    []int{100, 101, 116, 107, 111, 115, 115, 110, 106, 103, 100, 116, 104},
+		Expected: []int{100, 100, 101, 103, 104, 106, 107, 110, 111, 115, 115, 116, 116},
+	},
+}
