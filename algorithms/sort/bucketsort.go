@@ -63,7 +63,7 @@ func BucketSortInRange(n []int) {
 	currentIndex := 0
 
 	for _, bucket := range buckets {
-		sorted := InsertSort(bucket)
+		sorted := MergeSort(bucket)
 
 		for _, num := range sorted {
 			n[currentIndex] = num
