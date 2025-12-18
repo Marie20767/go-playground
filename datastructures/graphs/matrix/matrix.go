@@ -1,0 +1,118 @@
+package matrix
+
+import (
+	"fmt"
+	"strings"
+)
+
+type Matrix struct {
+	data [][]int
+}
+
+func New(data [][]int) *Matrix {
+	return &Matrix{
+		data: data,
+	}
+}
+
+type Node struct {
+	Row    int
+	Column int
+}
+
+// write a String method for the Matrix that prints it out in a nice way
+func (m *Matrix) String() string {
+	var sb strings.Builder
+
+	for _, row := range m.data {
+		sb.WriteString(fmt.Sprintf("%v\n", row))
+	}
+
+	return sb.String()
+}
+
+// [0 0 0 0]
+// [1 1 0 0]
+// [0 0 0 1]
+// [0 1 0 0]
+
+// return 'visitable neighbours' of the given node
+// e.g. if you are given Node{Row: 1, Col: 1}:
+//
+//	return the nodes above, to the right, to the left, below
+//	BUT don't return it if it is not 'visitable', e.g. it is 'blocked' or out of bounds
+func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
+	nodes := []Node{
+		{Row: node.Row, Column: node.Column - 1},
+		{Row: node.Row, Column: node.Column + 1},
+		{Row: node.Row - 1, Column: node.Column},
+		{Row: node.Row + 1, Column: node.Column},
+	}
+
+	visitable := []Node{}
+
+	for _, node := range nodes {
+		if !m.isBlocked(node) {
+			visitable = append(visitable, node)
+		}
+	}
+
+	return visitable
+}
+
+// [0 0 0 0]
+// [1 1 0 0]
+// [0 0 0 1]
+// [0 1 0 0]
+
+func (m *Matrix) ExploreVisitableNeighboursWithDiagonals(node Node) []Node {
+	nodes := []Node{
+		{Row: node.Row, Column: node.Column - 1},
+		{Row: node.Row, Column: node.Column + 1},
+		{Row: node.Row - 1, Column: node.Column},
+		{Row: node.Row + 1, Column: node.Column},
+		{Row: node.Row - 1, Column: node.Column - 1},
+		{Row: node.Row - 1, Column: node.Column + 1},
+		{Row: node.Row + 1, Column: node.Column - 1},
+		{Row: node.Row + 1, Column: node.Column + 1},
+	}
+
+	visitable := []Node{}
+
+	for _, node := range nodes {
+		if !m.isBlocked(node) {
+			visitable = append(visitable, node)
+		}
+	}
+
+	return visitable
+}
+
+// returns true if the node is the bottom right node of the matrix
+func (m *Matrix) isFinalNode(node Node) bool {
+	isLastRow := node.Row == len(m.data)-1
+	isLastColumn := node.Column == len(m.data[0])-1
+
+	return isLastRow && isLastColumn
+}
+
+// returns false if the node is not inside the matrix bounds
+func (m *Matrix) isInBounds(node Node) bool {
+	numRows := len(m.data) - 1
+	if node.Row > numRows || node.Row < 0 {
+		return false
+	}
+
+	numColumns := len(m.data[node.Row]) - 1
+
+	return node.Column <= numColumns && node.Column > 0
+}
+
+// returns true if the node is a blocking node (in our example situation, you can move through all 0s but not 1s)
+func (m *Matrix) isBlocked(node Node) bool {
+	if !m.isInBounds(node) {
+		return true
+	}
+
+	return m.data[node.Row][node.Column] == 1
+}

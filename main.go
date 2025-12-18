@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
-	datastructures.BSTSearchExample()
+	// datastructures.BSTSearchExample()
+	datastructures.MatrixExample()
 	// concurrency.ConcurrencyExamples()
 }
