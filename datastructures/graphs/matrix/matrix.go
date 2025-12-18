@@ -42,18 +42,21 @@ func (m *Matrix) String() string {
 //	return the nodes above, to the right, to the left, below
 //	BUT don't return it if it is not 'visitable', e.g. it is 'blocked' or out of bounds
 func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
-	nodes := []Node{
-		{Row: node.Row, Column: node.Column - 1},
-		{Row: node.Row, Column: node.Column + 1},
-		{Row: node.Row - 1, Column: node.Column},
-		{Row: node.Row + 1, Column: node.Column},
+	directions := []Node{
+		{0, 1},  // right
+		{1, 0},  // down
+		{0, -1}, // left
+		{-1, 0}, // up
 	}
-
 	visitable := []Node{}
 
-	for _, node := range nodes {
-		if !m.isBlocked(node) {
-			visitable = append(visitable, node)
+	for _, direction := range directions {
+		nodeToCheck := Node{
+			Row:    node.Row + direction.Row,
+			Column: node.Column + direction.Column,
+		}
+		if m.isInBounds(nodeToCheck) && !m.isBlocked(nodeToCheck) {
+			visitable = append(visitable, nodeToCheck)
 		}
 	}
 
@@ -66,22 +69,26 @@ func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
 // [0 1 0 0]
 
 func (m *Matrix) ExploreVisitableNeighboursWithDiagonals(node Node) []Node {
-	nodes := []Node{
-		{Row: node.Row, Column: node.Column - 1},
-		{Row: node.Row, Column: node.Column + 1},
-		{Row: node.Row - 1, Column: node.Column},
-		{Row: node.Row + 1, Column: node.Column},
-		{Row: node.Row - 1, Column: node.Column - 1},
-		{Row: node.Row - 1, Column: node.Column + 1},
-		{Row: node.Row + 1, Column: node.Column - 1},
-		{Row: node.Row + 1, Column: node.Column + 1},
+	var directions = []Node{
+		{-1, 0},  // up
+		{0, 1},   // right
+		{1, 0},   // down
+		{0, -1},  // left
+		{-1, 1},  // up-right
+		{1, 1},   // down-right
+		{1, -1},  // down-left
+		{-1, -1}, // up-left
 	}
 
 	visitable := []Node{}
 
-	for _, node := range nodes {
-		if !m.isBlocked(node) {
-			visitable = append(visitable, node)
+	for _, direction := range directions {
+		neighbour := Node{
+			Row:    node.Row + direction.Row,
+			Column: node.Column + direction.Column,
+		}
+		if m.isInBounds(neighbour) && !m.isBlocked(neighbour) {
+			visitable = append(visitable, neighbour)
 		}
 	}
 
@@ -110,9 +117,5 @@ func (m *Matrix) isInBounds(node Node) bool {
 
 // returns true if the node is a blocking node (in our example situation, you can move through all 0s but not 1s)
 func (m *Matrix) isBlocked(node Node) bool {
-	if !m.isInBounds(node) {
-		return true
-	}
-
 	return m.data[node.Row][node.Column] == 1
 }

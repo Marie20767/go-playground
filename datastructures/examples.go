@@ -24,5 +24,6 @@ func MatrixExample() {
 	fmt.Println(m)
 
 	visitable := m.ExploreVisitableNeighboursWithDiagonals(matrix.Node{Row: 1, Column: 2})
+
 	fmt.Println(">>> visitable: ", visitable)
 }
