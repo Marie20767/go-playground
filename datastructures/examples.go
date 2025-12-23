@@ -17,13 +17,12 @@ func MatrixExample() {
 	data := [][]int{
 		{0, 0, 0, 0},
 		{1, 1, 0, 0},
-		{0, 0, 0, 1},
+		{0, 0, 1, 1},
 		{0, 1, 0, 0},
 	}
 	m := matrix.New(data)
 	fmt.Println(m)
 
-	visitable := m.ExploreVisitableNeighboursWithDiagonals(matrix.Node{Row: 1, Column: 2})
-
-	fmt.Println(">>> visitable: ", visitable)
+	canReachEnd := m.CanReachEnd()
+	fmt.Println(">>> canReachEnd: ", canReachEnd)
 }

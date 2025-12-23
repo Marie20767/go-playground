@@ -31,16 +31,9 @@ func (m *Matrix) String() string {
 	return sb.String()
 }
 
-// [0 0 0 0]
-// [1 1 0 0]
-// [0 0 0 1]
-// [0 1 0 0]
-
 // return 'visitable neighbours' of the given node
-// e.g. if you are given Node{Row: 1, Col: 1}:
-//
-//	return the nodes above, to the right, to the left, below
-//	BUT don't return it if it is not 'visitable', e.g. it is 'blocked' or out of bounds
+// e.g. if you are given Node{Row: 1, Col: 1}: return the nodes above, to the right, to the left, below
+// BUT don't return it if it is not 'visitable', e.g. it is 'blocked' or out of bounds
 func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
 	directions := []Node{
 		{0, 1},  // right
@@ -62,11 +55,6 @@ func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
 
 	return visitable
 }
-
-// [0 0 0 0]
-// [1 1 0 0]
-// [0 0 0 1]
-// [0 1 0 0]
 
 func (m *Matrix) ExploreVisitableNeighboursWithDiagonals(node Node) []Node {
 	var directions = []Node{
@@ -115,7 +103,92 @@ func (m *Matrix) isInBounds(node Node) bool {
 	return node.Column <= numColumns && node.Column > 0
 }
 
-// returns true if the node is a blocking node (in our example situation, you can move through all 0s but not 1s)
+// returns true if the node is a blocking node
 func (m *Matrix) isBlocked(node Node) bool {
 	return m.data[node.Row][node.Column] == 1
 }
+
+// ***************************************
+// BFS algorithms
+
+// starting from the top left node, traverse through the matrix
+// return true if you can reach the end, false otherwise
+func (m *Matrix) CanReachEnd() bool {
+	queue := []Node{}
+	queue = append(queue, Node{Row: 0, Column: 0})
+	directions := []Node{
+		{-1, 0}, // up
+		{0, 1},  // right
+		{1, 0},  // down
+		{0, -1}, // left
+	}
+	visited := map[Node]struct{}{}
+
+	for len(queue) > 0 {
+		first := queue[0]
+		queue = queue[1:]
+
+		if m.isFinalNode(first) {
+			return true
+		}
+
+		for _, direction := range directions {
+			neighbour := Node{
+				Row:    first.Row + direction.Row,
+				Column: first.Column + direction.Column,
+			}
+
+			_, prevVisited := visited[neighbour]
+			if !prevVisited && m.isInBounds(neighbour) && !m.isBlocked(neighbour) {
+				queue = append(queue, neighbour)
+			}
+		}
+
+		visited[first] = struct{}{}
+	}
+
+	return false
+}
+
+func (m *Matrix) CanReachEnd2() bool {
+	queue := []Node{}
+	queue = append(queue, Node{Row: 0, Column: 0})
+	directions := []Node{
+		{-1, 0}, // up
+		{0, 1},  // right
+		{1, 0},  // down
+		{0, -1}, // left
+	}
+
+	numRows, numCols := len(m.data), len(m.data[0])
+	visited := make([][]bool, numRows)
+	for rowIndex := range numRows {
+		visited[rowIndex] = make([]bool, numCols)
+	}
+
+	for len(queue) > 0 {
+		first := queue[0]
+		queue = queue[1:]
+
+		if m.isFinalNode(first) {
+			return true
+		}
+
+		for _, direction := range directions {
+			neighbour := Node{
+				Row:    first.Row + direction.Row,
+				Column: first.Column + direction.Column,
+			}
+
+			if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
+				queue = append(queue, neighbour)
+			}
+		}
+
+		visited[first.Row][first.Column] = true
+	}
+
+	return false
+}
+
+// ***************************************

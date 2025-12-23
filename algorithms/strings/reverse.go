@@ -10,6 +10,5 @@ func Reverse(s string) string {
 		reversed = append(reversed, words[i])
 	}
 
-
 	return strings.Join(reversed, " ")
 }
