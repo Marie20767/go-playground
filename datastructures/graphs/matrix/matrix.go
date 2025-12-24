@@ -31,16 +31,28 @@ func (m *Matrix) String() string {
 	return sb.String()
 }
 
+var directions = []Node{
+	{0, 1},  // right
+	{1, 0},  // down
+	{0, -1}, // left
+	{-1, 0}, // up
+}
+
+var directionsWithDiagonals = []Node{
+	{-1, 0},  // up
+	{0, 1},   // right
+	{1, 0},   // down
+	{0, -1},  // left
+	{-1, 1},  // up-right
+	{1, 1},   // down-right
+	{1, -1},  // down-left
+	{-1, -1}, // up-left
+}
+
 // return 'visitable neighbours' of the given node
 // e.g. if you are given Node{Row: 1, Col: 1}: return the nodes above, to the right, to the left, below
 // BUT don't return it if it is not 'visitable', e.g. it is 'blocked' or out of bounds
 func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
-	directions := []Node{
-		{0, 1},  // right
-		{1, 0},  // down
-		{0, -1}, // left
-		{-1, 0}, // up
-	}
 	visitable := []Node{}
 
 	for _, direction := range directions {
@@ -57,20 +69,9 @@ func (m *Matrix) ExploreVisitableNeighbours(node Node) []Node {
 }
 
 func (m *Matrix) ExploreVisitableNeighboursWithDiagonals(node Node) []Node {
-	var directions = []Node{
-		{-1, 0},  // up
-		{0, 1},   // right
-		{1, 0},   // down
-		{0, -1},  // left
-		{-1, 1},  // up-right
-		{1, 1},   // down-right
-		{1, -1},  // down-left
-		{-1, -1}, // up-left
-	}
-
 	visitable := []Node{}
 
-	for _, direction := range directions {
+	for _, direction := range directionsWithDiagonals {
 		neighbour := Node{
 			Row:    node.Row + direction.Row,
 			Column: node.Column + direction.Column,
@@ -116,12 +117,6 @@ func (m *Matrix) isBlocked(node Node) bool {
 func (m *Matrix) CanReachEnd() bool {
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
-	directions := []Node{
-		{-1, 0}, // up
-		{0, 1},  // right
-		{1, 0},  // down
-		{0, -1}, // left
-	}
 	visited := map[Node]struct{}{
 		queue[0]: {},
 	}
@@ -156,12 +151,6 @@ func (m *Matrix) CanReachEnd() bool {
 func (m *Matrix) CanReachEnd2() bool {
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
-	directions := []Node{
-		{-1, 0}, // up
-		{0, 1},  // right
-		{1, 0},  // down
-		{0, -1}, // left
-	}
 
 	numRows, numCols := len(m.data), len(m.data[0])
 	visited := make([][]bool, numRows)
@@ -198,19 +187,44 @@ func (m *Matrix) CanReachEnd2() bool {
 }
 
 // Find the shortest path from top left to bottom right
-
-// [0 0 0 0]
-// [1 1 0 0]
-// [0 0 0 1]
-// [0 1 0 0]
-
-// >>> queue:  [{0 1}]
-// >>> queue:  [{0 2}]
-// >>> queue:  [{0 3} {1 2}]
-// >>> queue:  [{1 3} {2 2}]
-// >>> queue:  [{3 2} {2 1}]
-// >>> queue:  [{3 3}]
 func (m *Matrix) ShortestPath() int {
+	queue := []Node{}
+	queue = append(queue, Node{Row: 0, Column: 0})
+
+	numRows, numCols := len(m.data), len(m.data[0])
+	visited := make([][]bool, numRows)
+	for rowIndex := range visited {
+		visited[rowIndex] = make([]bool, numCols)
+	}
+
+	visited[0][0] = true
+	counter := 0
+
+	for len(queue) > 0 {
+		for range queue {
+			first := queue[0]
+			queue = queue[1:]
+
+			if m.isFinalNode(first) {
+				return counter
+			}
+
+			for _, direction := range directions {
+				neighbour := Node{
+					Row:    first.Row + direction.Row,
+					Column: first.Column + direction.Column,
+				}
+
+				if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
+					visited[neighbour.Row][neighbour.Column] = true
+					queue = append(queue, neighbour)
+				}
+			}
+		}
+
+		counter++
+	}
+
 	return 0
 }
 
