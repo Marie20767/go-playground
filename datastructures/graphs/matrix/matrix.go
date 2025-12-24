@@ -122,29 +122,32 @@ func (m *Matrix) CanReachEnd() bool {
 		{1, 0},  // down
 		{0, -1}, // left
 	}
-	visited := map[Node]struct{}{}
+	visited := map[Node]struct{}{
+		queue[0]: {},
+	}
 
 	for len(queue) > 0 {
-		first := queue[0]
-		queue = queue[1:]
+		for range len(queue) {
+			first := queue[0]
+			queue = queue[1:]
 
-		if m.isFinalNode(first) {
-			return true
-		}
-
-		for _, direction := range directions {
-			neighbour := Node{
-				Row:    first.Row + direction.Row,
-				Column: first.Column + direction.Column,
+			if m.isFinalNode(first) {
+				return true
 			}
 
-			_, prevVisited := visited[neighbour]
-			if !prevVisited && m.isInBounds(neighbour) && !m.isBlocked(neighbour) {
-				queue = append(queue, neighbour)
+			for _, direction := range directions {
+				neighbour := Node{
+					Row:    first.Row + direction.Row,
+					Column: first.Column + direction.Column,
+				}
+
+				_, prevVisited := visited[neighbour]
+				if !prevVisited && m.isInBounds(neighbour) && !m.isBlocked(neighbour) {
+					queue = append(queue, neighbour)
+					visited[neighbour] = struct{}{}
+				}
 			}
 		}
-
-		visited[first] = struct{}{}
 	}
 
 	return false
@@ -166,29 +169,49 @@ func (m *Matrix) CanReachEnd2() bool {
 		visited[rowIndex] = make([]bool, numCols)
 	}
 
+	visited[0][0] = true
+
 	for len(queue) > 0 {
-		first := queue[0]
-		queue = queue[1:]
+		for range len(queue) {
+			first := queue[0]
+			queue = queue[1:]
 
-		if m.isFinalNode(first) {
-			return true
-		}
-
-		for _, direction := range directions {
-			neighbour := Node{
-				Row:    first.Row + direction.Row,
-				Column: first.Column + direction.Column,
+			if m.isFinalNode(first) {
+				return true
 			}
 
-			if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
-				queue = append(queue, neighbour)
+			for _, direction := range directions {
+				neighbour := Node{
+					Row:    first.Row + direction.Row,
+					Column: first.Column + direction.Column,
+				}
+
+				if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
+					queue = append(queue, neighbour)
+					visited[neighbour.Row][neighbour.Column] = true
+				}
 			}
 		}
-
-		visited[first.Row][first.Column] = true
 	}
 
 	return false
+}
+
+// Find the shortest path from top left to bottom right
+
+// [0 0 0 0]
+// [1 1 0 0]
+// [0 0 0 1]
+// [0 1 0 0]
+
+// >>> queue:  [{0 1}]
+// >>> queue:  [{0 2}]
+// >>> queue:  [{0 3} {1 2}]
+// >>> queue:  [{1 3} {2 2}]
+// >>> queue:  [{3 2} {2 1}]
+// >>> queue:  [{3 3}]
+func (m *Matrix) ShortestPath() int {
+	return 0
 }
 
 // ***************************************
