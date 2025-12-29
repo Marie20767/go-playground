@@ -23,6 +23,6 @@ func MatrixExample() {
 	m := matrix.New(data)
 	fmt.Println(m)
 
-	shortestPath := m.ShortestPath()
-	fmt.Println(">>> shortestPath: ", shortestPath)
+	CanReachEndBFS := m.CanReachEnd2BFS()
+	fmt.Println(">>> CanReachEndBFS: ", CanReachEndBFS)
 }

@@ -94,14 +94,17 @@ func (m *Matrix) isFinalNode(node Node) bool {
 
 // returns false if the node is not inside the matrix bounds
 func (m *Matrix) isInBounds(node Node) bool {
-	numRows := len(m.data) - 1
-	if node.Row > numRows || node.Row < 0 {
+	if node.Row < 0 || node.Column < 0 {
 		return false
 	}
 
-	numColumns := len(m.data[node.Row]) - 1
+	numRows, numColumns := len(m.data), len(m.data[0])
 
-	return node.Column <= numColumns && node.Column > 0
+	if node.Row >= numRows || node.Column >= numColumns {
+		return false
+	}
+
+	return true
 }
 
 // returns true if the node is a blocking node
@@ -109,14 +112,16 @@ func (m *Matrix) isBlocked(node Node) bool {
 	return m.data[node.Row][node.Column] == 1
 }
 
-// ***************************************
-// BFS algorithms
-
 // starting from the top left node, traverse through the matrix
 // return true if you can reach the end, false otherwise
-func (m *Matrix) CanReachEnd() bool {
+func (m *Matrix) CanReachEndBFS() bool {
+	if m.data[0][0] == 1 {
+		return false
+	}
+
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
+
 	visited := map[Node]struct{}{
 		queue[0]: {},
 	}
@@ -148,7 +153,11 @@ func (m *Matrix) CanReachEnd() bool {
 	return false
 }
 
-func (m *Matrix) CanReachEnd2() bool {
+func (m *Matrix) CanReachEnd2BFS() bool {
+	if m.data[0][0] == 1 {
+		return false
+	}
+
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
 
@@ -187,7 +196,11 @@ func (m *Matrix) CanReachEnd2() bool {
 }
 
 // Find the shortest path from top left to bottom right
-func (m *Matrix) ShortestPath() int {
+func (m *Matrix) ShortestPathBFS() int {
+	if m.data[0][0] == 1 {
+		return 0
+	}
+
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
 
@@ -197,8 +210,8 @@ func (m *Matrix) ShortestPath() int {
 		visited[rowIndex] = make([]bool, numCols)
 	}
 
-	visited[0][0] = true
 	counter := 0
+	visited[0][0] = true
 
 	for len(queue) > 0 {
 		for range queue {
@@ -228,4 +241,35 @@ func (m *Matrix) ShortestPath() int {
 	return 0
 }
 
-// ***************************************
+// Print each visitable element until you reach the end (bottom right)
+func (m *Matrix) CanReachEndDFS() bool {
+	if m.data[0][0] == 1 {
+		return false
+	}
+
+	numRows, numCols := len(m.data), len(m.data[0])
+	visited := make([][]bool, numRows)
+	for rowIndex := range visited {
+		visited[rowIndex] = make([]bool, numCols)
+	}
+	return m.dfs(0, 0, visited)
+}
+
+func (m *Matrix) dfs(row int, col int, visited [][]bool) bool {
+	if row == len(m.data)-1 && col == len(m.data[0])-1 {
+		return true
+	}
+
+	visited[row][col] = true
+	for _, direction := range directions {
+		neighbour := Node{Row: row + direction.Row, Column: col + direction.Column}
+
+		if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
+			if m.dfs(neighbour.Row, neighbour.Column, visited) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
