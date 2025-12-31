@@ -241,7 +241,8 @@ func (m *Matrix) ShortestPathBFS() int {
 	return 0
 }
 
-// Print each visitable element until you reach the end (bottom right)
+// starting from the top left node, traverse through the matrix
+// return true if you can reach the end, false otherwise
 func (m *Matrix) CanReachEndDFS() bool {
 	if m.data[0][0] == 1 {
 		return false

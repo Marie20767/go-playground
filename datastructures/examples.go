@@ -7,13 +7,13 @@ import (
 	"github.com/Marie20767/go-playground/datastructures/graphs/matrix"
 )
 
-func BSTSearchExample() {
+func BSTSearchExamples() {
 	bst := binarysearchtree.NewFromList([]int{5, 3, 10, 1, 6, 7})
 	fmt.Println(bst)
 	bst.BFSTraversal()
 }
 
-func MatrixExample() {
+func MatrixExamples() {
 	data := [][]int{
 		{0, 0, 0, 0},
 		{1, 1, 0, 0},
