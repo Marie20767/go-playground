@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/Marie20767/go-playground/algorithms/graphs"
+	"github.com/Marie20767/go-playground/datastructures"
 )
 
 func main() {
 	// datastructures.BSTSearchExamples()
-	// datastructures.MatrixExamples()
+	datastructures.MatrixExamples()
 	// concurrency.ConcurrencyExamples()
-	graphs.GraphExamples()
+	// graphs.GraphExamples()
 }

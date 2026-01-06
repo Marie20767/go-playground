@@ -121,10 +121,7 @@ func (m *Matrix) CanReachEndBFS() bool {
 
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
-
-	visited := map[Node]struct{}{
-		queue[0]: {},
-	}
+	m.data[0][0] = 1
 
 	for len(queue) > 0 {
 		for range len(queue) {
@@ -141,52 +138,9 @@ func (m *Matrix) CanReachEndBFS() bool {
 					Column: first.Column + direction.Column,
 				}
 
-				_, prevVisited := visited[neighbour]
-				if !prevVisited && m.isInBounds(neighbour) && !m.isBlocked(neighbour) {
+				if m.isInBounds(neighbour) && m.data[neighbour.Row][neighbour.Column] != 1 && !m.isBlocked(neighbour) {
 					queue = append(queue, neighbour)
-					visited[neighbour] = struct{}{}
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-func (m *Matrix) CanReachEnd2BFS() bool {
-	if m.data[0][0] == 1 {
-		return false
-	}
-
-	queue := []Node{}
-	queue = append(queue, Node{Row: 0, Column: 0})
-
-	numRows, numCols := len(m.data), len(m.data[0])
-	visited := make([][]bool, numRows)
-	for rowIndex := range numRows {
-		visited[rowIndex] = make([]bool, numCols)
-	}
-
-	visited[0][0] = true
-
-	for len(queue) > 0 {
-		for range len(queue) {
-			first := queue[0]
-			queue = queue[1:]
-
-			if m.isFinalNode(first) {
-				return true
-			}
-
-			for _, direction := range directions {
-				neighbour := Node{
-					Row:    first.Row + direction.Row,
-					Column: first.Column + direction.Column,
-				}
-
-				if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
-					queue = append(queue, neighbour)
-					visited[neighbour.Row][neighbour.Column] = true
+					m.data[neighbour.Row][neighbour.Column] = 1
 				}
 			}
 		}
@@ -203,15 +157,8 @@ func (m *Matrix) ShortestPathBFS() int {
 
 	queue := []Node{}
 	queue = append(queue, Node{Row: 0, Column: 0})
-
-	numRows, numCols := len(m.data), len(m.data[0])
-	visited := make([][]bool, numRows)
-	for rowIndex := range visited {
-		visited[rowIndex] = make([]bool, numCols)
-	}
-
 	counter := 0
-	visited[0][0] = true
+	m.data[0][0] = 1
 
 	for len(queue) > 0 {
 		for range queue {
@@ -228,8 +175,8 @@ func (m *Matrix) ShortestPathBFS() int {
 					Column: first.Column + direction.Column,
 				}
 
-				if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
-					visited[neighbour.Row][neighbour.Column] = true
+				if m.isInBounds(neighbour) && m.data[neighbour.Row][neighbour.Column] != 1 && !m.isBlocked(neighbour) {
+					m.data[neighbour.Row][neighbour.Column] = 1
 					queue = append(queue, neighbour)
 				}
 			}
@@ -248,25 +195,20 @@ func (m *Matrix) CanReachEndDFS() bool {
 		return false
 	}
 
-	numRows, numCols := len(m.data), len(m.data[0])
-	visited := make([][]bool, numRows)
-	for rowIndex := range visited {
-		visited[rowIndex] = make([]bool, numCols)
-	}
-	return m.dfs(0, 0, visited)
+	return m.dfs(0, 0)
 }
 
-func (m *Matrix) dfs(row int, col int, visited [][]bool) bool {
+func (m *Matrix) dfs(row int, col int) bool {
 	if row == len(m.data)-1 && col == len(m.data[0])-1 {
 		return true
 	}
 
-	visited[row][col] = true
+	m.data[row][col] = 1
 	for _, direction := range directions {
 		neighbour := Node{Row: row + direction.Row, Column: col + direction.Column}
 
-		if m.isInBounds(neighbour) && !visited[neighbour.Row][neighbour.Column] && !m.isBlocked(neighbour) {
-			if m.dfs(neighbour.Row, neighbour.Column, visited) {
+		if m.isInBounds(neighbour) && m.data[neighbour.Row][neighbour.Column] != 1 && !m.isBlocked(neighbour) {
+			if m.dfs(neighbour.Row, neighbour.Column) {
 				return true
 			}
 		}

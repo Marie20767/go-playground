@@ -18,11 +18,11 @@ func MatrixExamples() {
 		{0, 0, 0, 0},
 		{1, 1, 0, 0},
 		{0, 0, 0, 1},
-		{0, 1, 0, 0},
+		{0, 1, 1, 0},
 	}
 	m := matrix.New(data)
 	fmt.Println(m)
 
-	CanReachEndBFS := m.CanReachEnd2BFS()
-	fmt.Println(">>> CanReachEndBFS: ", CanReachEndBFS)
+	canReachEndBFS := m.CanReachEndBFS()
+	fmt.Println(">>> canReachEndBFS: ", canReachEndBFS)
 }
