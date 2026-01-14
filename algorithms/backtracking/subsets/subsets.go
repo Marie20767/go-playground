@@ -31,7 +31,7 @@ func Subsets(nums []int) [][]int {
 		subset = append(subset, nums[i])
 		dfs(i + 1)
 
-		// decision NOT to include nums[i]
+		// decision to exclude nums[i]
 		subset = subset[:len(subset)-1]
 		dfs(i + 1)
 	}

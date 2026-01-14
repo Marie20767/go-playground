@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Marie20767/go-playground/algorithms/graphs/treasure"
+	"github.com/Marie20767/go-playground/algorithms/backtracking/combinationsum"
 )
 
 func main() {
@@ -9,10 +9,5 @@ func main() {
 	// datastructures.MatrixExamples()
 	// concurrency.ConcurrencyExamples()
 
-	treasure.IslandsAndTreasure([][]int{
-		{2147483647, -1, 0, 2147483647},
-		{2147483647, 2147483647, 2147483647, -1},
-		{2147483647, -1, 2147483647, -1},
-		{0, -1, 2147483647, 2147483647},
-	})
+	combinationsum.CombinationSum([]int{1, 2, 3}, 3)
 }
