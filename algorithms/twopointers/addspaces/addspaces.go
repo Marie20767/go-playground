@@ -42,12 +42,12 @@ func AddSpaces(s string, spaces []int) string {
 	j := 0
 
 	for i := 0; i < len(s); i++ {
-		if j >= len(spaces) || i != spaces[j] {
-			sb.WriteString(string(s[i]))
-		} else {
-			sb.WriteString(" " + string(s[i]))
+		if j < len(spaces) && i == spaces[j] {
+			sb.WriteString(" ")
 			j++
 		}
+
+		sb.WriteString(string(s[i]))
 	}
 
 	return sb.String()
