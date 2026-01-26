@@ -3,12 +3,16 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"slices"
+	"strings"
 	"time"
 )
+
+var ErrInvalidQuery = errors.New("invalid query param")
 
 func main() {
 	if err := run(); err != nil {
@@ -34,6 +38,7 @@ type Log struct {
 
 func parseLogs(query string) error {
 	logs := []*Log{}
+	// TODO: Update parseLogs() to loop through all /logs files instead of 1 hardcoded path
 	filePath := "logs/mylog.log"
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -47,7 +52,6 @@ func parseLogs(query string) error {
 		if err != nil {
 			return err
 		}
-		logs = append(logs, parsedLine)
 		log, err := filterLog(query, parsedLine)
 		if err != nil {
 			return err
@@ -94,21 +98,28 @@ func parseLogLine(line string) (*Log, error) {
 	return &parsed, nil
 }
 
-func filterLog(query string, log *Log) (*Log, error) {
-	// params := string[2]{}
-	// loop through query
-	// 		validate every key & value per query param (key=value)
-	//		append to params
-	//		[["service", "auth"], ["level", "error"]]
+var getters = map[string]func(*Log) string{
+	"service": func(l *Log) string { return l.Service },
+	"level":   func(l *Log) string { return l.Level },
+}
 
-	// loop through params
-	//		for every param, check if it's available in the log
-	//			if yes: check value matches
-	//						if no match: return nil
-	//						if match: continue loop
+func filterLog(query string, log *Log) (*Log, error) {
+	params := strings.SplitSeq(query, " ")
+	for param := range params {
+		kv := strings.Split(param, "=")
+		if len(kv) < 2 {
+			return nil, ErrInvalidQuery
+		}
+		key, value := kv[0], kv[1]
+		get, ok := getters[key]
+		if !ok {
+			return nil, ErrInvalidQuery
+		}
+
+		if value != get(log) {
+			return nil, nil
+		}
+	}
 
 	return log, nil
-
-	// query example: "service=auth level=warning"
-	// line example: {"timestamp": "2025-10-28T10:00:01Z", "service": "payments", "level": "info", "message": "Payment completed"}
 }

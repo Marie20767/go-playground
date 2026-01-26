@@ -35,6 +35,7 @@ Note - you can use the `bufio.NewScanner` in golang to efficiently read a file l
 
 ### Extra steps for after version 1 is working:
 - make it so the path to the logs is configurable via a command line flag
+- query by timestamp and message
 
 ## Detailed plan:
 1. Create cmd folder and /cmd/logparser folder
