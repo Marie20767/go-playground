@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -14,8 +13,6 @@ import (
 	"strings"
 	"time"
 )
-
-var ErrInvalidQuery = errors.New("invalid query")
 
 type LogEntry struct {
 	RawLine      string    `json:"-"`
