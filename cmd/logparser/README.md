@@ -35,7 +35,7 @@ Note - you can use the `bufio.NewScanner` in golang to efficiently read a file l
 
 ### Extra steps for after version 1 is working:
 - make it so the path to the logs is configurable via a command line flag
-- query by timestamp and message
+- query by timestamp and message (partial match)
 
 ## Detailed plan:
 1. Create cmd folder and /cmd/logparser folder
@@ -51,6 +51,6 @@ Note - you can use the `bufio.NewScanner` in golang to efficiently read a file l
     - filter by service & level (need validation here!)
     - check if it prints correctly by running `go run main.go`
 6. Update parseLogs() to loop through all /logs files instead of 1 hardcoded path
-7. Make parseLogs() a CLI tool + remove arguments from parseLogs()
-8. Test running it from the CLI works by running `go run main.go -query="service=auth level=error"` with multiple variations
-9. Make it so the path to the logs is configurable by accepting something like `go run main.go -query="service=auth level=error path=customlogs"` + test this works
+7. Accept CLI arguments for parseLogs()
+8. Make it so the path to the logs is configurable by accepting something like `go run main.go -query="service=auth level=error path=customlogs"`
+9. Update parseLogs() to query by timestamp and message (e.g. after={timestamp})
