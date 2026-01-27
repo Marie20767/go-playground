@@ -10,203 +10,177 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"slices"
+	"sort"
 	"strings"
 	"time"
 )
 
-var ErrInvalidQuery = errors.New("invalid query param")
+var ErrInvalidQuery = errors.New("invalid query")
+
+type LogEntry struct {
+	RawLine      string    `json:"-"`
+	Timestamp    time.Time `json:"-"`
+	RawTimestamp string    `json:"timestamp"`
+	Level        string    `json:"level"`
+	Service      string    `json:"service"`
+	Message      string    `json:"message"`
+}
+
+type Query struct {
+	Key   string
+	Value string
+}
 
 func main() {
-	if err := run(); err != nil {
-		log.Println("server closed", err)
+	path := flag.String("path", "logs", "path to the directory containing the log files")
+	query := flag.String("query", "", "query to filter the logs by e.g. service=auth")
+	flag.Parse()
+
+	if err := run(*path, *query); err != nil {
+		log.Println("log parsing failed", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	query := flag.String("query", "", "")
-	flag.Parse()
-	if err := parseLogs(*query); err != nil {
-		return err
+func run(path, query string) error {
+	queries, err := parseQueries(query)
+	if err != nil {
+		return fmt.Errorf("invalid query: %v", err)
+	}
+	entries, err := parseLogFiles(path, queries)
+	if err != nil {
+		return fmt.Errorf("failed to parse log files: %v", err)
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Timestamp.Before(entries[j].Timestamp)
+	})
+
+	for _, entry := range entries {
+		if matchesQueries(queries, entry) {
+			fmt.Println(entry.RawLine)
+		}
 	}
 
 	return nil
 }
 
-type Log struct {
-	Timestamp time.Time `json:"timestamp"`
-	Level     string    `json:"level"`
-	Service   string    `json:"service"`
-	Message   string    `json:"message"`
+func parseQueries(query string) ([]Query, error) {
+	parsedQueries := []Query{}
+	if query == "" {
+		return parsedQueries, nil
+	}
+
+	queries := strings.FieldsSeq(query)
+	for query := range queries {
+		parts := strings.SplitN(query, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid query format: %s (expected key=value)", parts)
+		}
+
+		parsedQueries = append(parsedQueries, Query{
+			Key:   parts[0],
+			Value: parts[1],
+		})
+	}
+
+	return parsedQueries, nil
 }
 
-// TODO: query by timestamp (after={timestamp} before={timestamp})
-// TODO: query by partial message match
-
-func parseLogs(query string) error {
-	queryParams, err := parseQueryParams(query)
-	if err != nil {
-		return err
-	}
-
-	for i, param := range queryParams {
-		key, value := param[0], param[1]
-		if key == "path" {
-			queryParams = append(queryParams[:i], queryParams[i+1:]...)
-			fileLogs, err := parseFile(value, queryParams)
-			if err != nil {
-				return err
-			}
-			printSortedLogs(fileLogs)
-			return nil
-		}
-	}
-
-	err = filepath.WalkDir("logs", func(path string, d fs.DirEntry, err error) error {
+func parseLogFiles(path string, queries []Query) (entries []LogEntry, err error) {
+	err = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if !d.IsDir() {
-			fileLogs, err := parseFile(path, queryParams)
-			if err != nil {
-				return err
-			}
-			if fileLogs != nil {
-				printSortedLogs(fileLogs)
-			}
+		if d.IsDir() || filepath.Ext(path) != ".log" {
+			return nil
 		}
+
+		fileEntries, err := parseFile(path)
+		if err != nil {
+			return err
+		}
+		entries = append(entries, fileEntries...)
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return entries, err
 }
 
-func printSortedLogs(logs []*Log) error {
-	sortLogs(logs)
-	for _, log := range logs {
-		bytes, err := json.Marshal(log)
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(string(bytes))
-	}
-
-	return nil
-}
-
-func parseFile(filePath string, queryParams [][]string) ([]*Log, error) {
+func parseFile(filePath string) (entries []LogEntry, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read log file %v", err)
 	}
+	defer file.Close()
 
-	filteredLogs := []*Log{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
+		var entry LogEntry
+
 		line := scanner.Text()
-		parsedLine, err := parseLogLine(line)
+		err := json.Unmarshal([]byte(line), &entry)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse log line %v:", err)
 		}
 
-		log, err := filterLog(queryParams, parsedLine)
+		timestamp, err := time.Parse(time.RFC3339, entry.RawTimestamp)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse timestamp %v:", err)
 		}
-		if log != nil {
-			filteredLogs = append(filteredLogs, log)
-		}
+		entry.RawLine = line
+		entry.Timestamp = timestamp
+
+		entries = append(entries, entry)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse file %v:", err)
 	}
 
-	return filteredLogs, nil
+	return entries, nil
 }
 
-func parseQueryParams(query string) ([][]string, error) {
-	params := strings.SplitSeq(query, " ")
-	parsedParams := [][]string{}
-
-	for param := range params {
-		kv := strings.Split(param, "=")
-		if len(kv) < 2 {
-			return nil, ErrInvalidQuery
+func matchesQueries(queries []Query, entry LogEntry) bool {
+	for _, query := range queries {
+		fn, ok := paramFilters[query.Key]
+		if !ok {
+			return false
 		}
 
-		parsedParams = append(parsedParams, kv)
-	}
-
-	return parsedParams, nil
-}
-
-func sortLogs(logs []*Log) {
-	slices.SortFunc(logs, func(a, b *Log) int {
-		if a.Timestamp.Before(b.Timestamp) {
-			return -1
-		} else if a.Timestamp.After(b.Timestamp) {
-			return 1
+		match, err := fn(entry, query.Value)
+		if !match || err != nil {
+			return false
 		}
-		return 0
-	})
-}
-
-func parseLogLine(line string) (*Log, error) {
-	var parsed *Log
-	err := json.Unmarshal([]byte(line), &parsed)
-	if err != nil {
-		return nil, err
 	}
 
-	return parsed, nil
+	return true
 }
 
-var paramFilters = map[string]func(*Log, string) (bool, error){
-	"service": func(l *Log, q string) (bool, error) {
+var paramFilters = map[string]func(LogEntry, string) (bool, error){
+	"service": func(l LogEntry, q string) (bool, error) {
 		return strings.EqualFold(l.Service, q), nil
 	},
-	"level": func(l *Log, q string) (bool, error) {
+	"level": func(l LogEntry, q string) (bool, error) {
 		return strings.EqualFold(l.Level, q), nil
 	},
-	"message": func(l *Log, q string) (bool, error) {
+	"message": func(l LogEntry, q string) (bool, error) {
 		return strings.Contains(strings.ToLower(l.Message), strings.ToLower(q)), nil
 	},
-	"after": func(l *Log, q string) (bool, error) {
+	"after": func(l LogEntry, q string) (bool, error) {
 		t, err := time.Parse(time.RFC3339, q)
 		if err != nil {
 			return false, err
 		}
 		return l.Timestamp.After(t), nil
 	},
-	"before": func(l *Log, q string) (bool, error) {
+	"before": func(l LogEntry, q string) (bool, error) {
 		t, err := time.Parse(time.RFC3339, q)
 		if err != nil {
 			return false, err
 		}
 		return l.Timestamp.Before(t), nil
 	},
-}
-
-func filterLog(params [][]string, log *Log) (*Log, error) {
-	for _, p := range params {
-		qKey, qVal := p[0], p[1]
-		fn, ok := paramFilters[qKey]
-		if !ok {
-			return nil, ErrInvalidQuery
-		}
-
-		match, err := fn(log, qVal)
-		if err != nil || !match {
-			return nil, err
-		}
-	}
-	return log, nil
 }
