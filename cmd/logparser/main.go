@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -22,7 +25,9 @@ func main() {
 }
 
 func run() error {
-	if err := parseLogs("service=auth level=warning"); err != nil {
+	query := flag.String("query", "", "")
+	flag.Parse()
+	if err := parseLogs(*query); err != nil {
 		return err
 	}
 
@@ -36,34 +41,53 @@ type Log struct {
 	Message   string    `json:"message"`
 }
 
+// TODO: query by timestamp (after={timestamp} before={timestamp})
+// TODO: query by partial message match
+
 func parseLogs(query string) error {
-	logs := []*Log{}
-	// TODO: Update parseLogs() to loop through all /logs files instead of 1 hardcoded path
-	filePath := "logs/mylog.log"
-	file, err := os.Open(filePath)
+	queryParams, err := parseQueryParams(query)
 	if err != nil {
 		return err
 	}
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		parsedLine, err := parseLogLine(line)
-		if err != nil {
-			return err
-		}
-		log, err := filterLog(query, parsedLine)
-		if err != nil {
-			return err
-		}
-		if log != nil {
-			logs = append(logs, parsedLine)
+	for i, param := range queryParams {
+		key, value := param[0], param[1]
+		if key == "path" {
+			queryParams = append(queryParams[:i], queryParams[i+1:]...)
+			fileLogs, err := parseFile(value, queryParams)
+			if err != nil {
+				return err
+			}
+			printSortedLogs(fileLogs)
+			return nil
 		}
 	}
-	if err := scanner.Err(); err != nil {
+
+	err = filepath.WalkDir("logs", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !d.IsDir() {
+			fileLogs, err := parseFile(path, queryParams)
+			if err != nil {
+				return err
+			}
+			if fileLogs != nil {
+				printSortedLogs(fileLogs)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func printSortedLogs(logs []*Log) error {
 	sortLogs(logs)
 	for _, log := range logs {
 		bytes, err := json.Marshal(log)
@@ -75,6 +99,53 @@ func parseLogs(query string) error {
 	}
 
 	return nil
+}
+
+func parseFile(filePath string, queryParams [][]string) ([]*Log, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	filteredLogs := []*Log{}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parsedLine, err := parseLogLine(line)
+		if err != nil {
+			return nil, err
+		}
+
+		log, err := filterLog(queryParams, parsedLine)
+		if err != nil {
+			return nil, err
+		}
+		if log != nil {
+			filteredLogs = append(filteredLogs, log)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return filteredLogs, nil
+}
+
+func parseQueryParams(query string) ([][]string, error) {
+	params := strings.SplitSeq(query, " ")
+	parsedParams := [][]string{}
+
+	for param := range params {
+		kv := strings.Split(param, "=")
+		if len(kv) < 2 {
+			return nil, ErrInvalidQuery
+		}
+
+		parsedParams = append(parsedParams, kv)
+	}
+
+	return parsedParams, nil
 }
 
 func sortLogs(logs []*Log) {
@@ -89,37 +160,53 @@ func sortLogs(logs []*Log) {
 }
 
 func parseLogLine(line string) (*Log, error) {
-	var parsed Log
+	var parsed *Log
 	err := json.Unmarshal([]byte(line), &parsed)
 	if err != nil {
 		return nil, err
 	}
 
-	return &parsed, nil
+	return parsed, nil
 }
 
-var getters = map[string]func(*Log) string{
-	"service": func(l *Log) string { return l.Service },
-	"level":   func(l *Log) string { return l.Level },
-}
-
-func filterLog(query string, log *Log) (*Log, error) {
-	params := strings.SplitSeq(query, " ")
-	for param := range params {
-		kv := strings.Split(param, "=")
-		if len(kv) < 2 {
-			return nil, ErrInvalidQuery
+var paramFilters = map[string]func(*Log, string) (bool, error){
+	"service": func(l *Log, q string) (bool, error) {
+		return strings.EqualFold(l.Service, q), nil
+	},
+	"level": func(l *Log, q string) (bool, error) {
+		return strings.EqualFold(l.Level, q), nil
+	},
+	"message": func(l *Log, q string) (bool, error) {
+		return strings.Contains(strings.ToLower(l.Message), strings.ToLower(q)), nil
+	},
+	"after": func(l *Log, q string) (bool, error) {
+		t, err := time.Parse(time.RFC3339, q)
+		if err != nil {
+			return false, err
 		}
-		key, value := kv[0], kv[1]
-		get, ok := getters[key]
+		return l.Timestamp.After(t), nil
+	},
+	"before": func(l *Log, q string) (bool, error) {
+		t, err := time.Parse(time.RFC3339, q)
+		if err != nil {
+			return false, err
+		}
+		return l.Timestamp.Before(t), nil
+	},
+}
+
+func filterLog(params [][]string, log *Log) (*Log, error) {
+	for _, p := range params {
+		qKey, qVal := p[0], p[1]
+		fn, ok := paramFilters[qKey]
 		if !ok {
 			return nil, ErrInvalidQuery
 		}
 
-		if value != get(log) {
-			return nil, nil
+		match, err := fn(log, qVal)
+		if err != nil || !match {
+			return nil, err
 		}
 	}
-
 	return log, nil
 }
