@@ -1,3 +1,4 @@
-{"timestamp": "2025-10-28T10:00:00Z", "service": "auth", "level": "error", "message": "Invalid token"}
-{"timestamp": "2025-10-28T10:00:05Z", "service": "payments", "level": "info", "message": "Payment completed"}
-{"timestamp": "2025-10-28T10:00:10Z", "service": "auth", "level": "warning", "message": "Slow login"}
+{"timestamp": "2025-10-28T10:00:03Z", "service": "auth", "level": "error", "message": "Invalid token"}
+{"timestamp": "2025-10-28T10:00:01Z", "service": "payments", "level": "info", "message": "Payment completed"}
+{"timestamp": "2025-10-02T10:00:00Z", "service": "auth", "level": "warning", "message": "Slow login"}
+{"timestamp": "2025-10-28T10:00:00Z", "service": "auth", "level": "warning", "message": "Wrong password"}

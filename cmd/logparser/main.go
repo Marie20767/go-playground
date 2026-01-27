@@ -1,15 +1,3 @@
-// A simple command-line tool for querying JSON log files.
-//
-// It loads log entries from one or more files in a directory, supports
-// filtering by key-value pairs (such as service and level), and prints
-// matching results in chronological order.
-//
-// Usage:
-//
-// go run main.go -path=/path/to/logs -query="service=auth level=error"
-//
-// Running `go run main.go` with no flags uses the default path ("logs")
-// and an empty query (no filtering).
 package main
 
 import (
@@ -18,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -26,11 +15,11 @@ import (
 )
 
 type LogEntry struct {
-	RawLine      string    `json:"-"` // Store original line for output
+	RawLine      string    `json:"-"`
+	Timestamp    time.Time `json:"-"`
 	RawTimestamp string    `json:"timestamp"`
-	Timestamp    time.Time `json:"-"` // The parsed timestamp
-	Service      string    `json:"service"`
 	Level        string    `json:"level"`
+	Service      string    `json:"service"`
 	Message      string    `json:"message"`
 }
 
@@ -40,14 +29,12 @@ type Query struct {
 }
 
 func main() {
-	path := flag.String("path", "logs", "the path to the directory containing the log files")
-	query := flag.String("query", "", "the query to filter the logs by, e.g. service=auth")
-
+	path := flag.String("path", "logs", "path to the directory containing the log files")
+	query := flag.String("query", "", "query to filter the logs by e.g. service=auth")
 	flag.Parse()
 
-	err := run(*path, *query)
-	if err != nil {
-		fmt.Println("log parsing failed: ", err)
+	if err := run(*path, *query); err != nil {
+		log.Println("log parsing failed", err)
 		os.Exit(1)
 	}
 }
@@ -57,13 +44,11 @@ func run(path, query string) error {
 	if err != nil {
 		return fmt.Errorf("invalid query: %v", err)
 	}
-
-	entries, err := parseLogFiles(path)
+	entries, err := parseLogFiles(path, queries)
 	if err != nil {
 		return fmt.Errorf("failed to parse log files: %v", err)
 	}
 
-	// Sort chronologically
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Timestamp.Before(entries[j].Timestamp)
 	})
@@ -77,55 +62,34 @@ func run(path, query string) error {
 	return nil
 }
 
-func parseQueries(query string) (queries []Query, err error) {
+func parseQueries(query string) ([]Query, error) {
+	parsedQueries := []Query{}
 	if query == "" {
-		return queries, nil
+		return parsedQueries, nil
 	}
 
-	queryStrings := strings.Fields(query)
-
-	for _, queryString := range queryStrings {
-		parts := strings.SplitN(queryString, "=", 2)
+	queries := strings.FieldsSeq(query)
+	for query := range queries {
+		parts := strings.SplitN(query, "=", 2)
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid query format: %s (expected key=value)", parts)
 		}
 
-		queries = append(queries, Query{
+		parsedQueries = append(parsedQueries, Query{
 			Key:   parts[0],
 			Value: parts[1],
 		})
 	}
 
-	return queries, nil
+	return parsedQueries, nil
 }
 
-func matchesQueries(queries []Query, entry LogEntry) bool {
-	for _, query := range queries {
-		switch query.Key {
-		case "service":
-			if entry.Service != query.Value {
-				return false
-			}
-		case "level":
-			if entry.Level != query.Value {
-				return false
-			}
-		// More complex query logic could be added here, e.g. timestamp/message filtering
-		default:
-			return false
-		}
-	}
-
-	return true
-}
-
-func parseLogFiles(path string) (entries []LogEntry, err error) {
+func parseLogFiles(path string, queries []Query) (entries []LogEntry, err error) {
 	err = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// skip any directories/non log files
 		if d.IsDir() || filepath.Ext(path) != ".log" {
 			return nil
 		}
@@ -142,10 +106,10 @@ func parseLogFiles(path string) (entries []LogEntry, err error) {
 	return entries, err
 }
 
-func parseFile(path string) (entries []LogEntry, err error) {
-	file, err := os.Open(path)
+func parseFile(filePath string) (entries []LogEntry, err error) {
+	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read log file: %v", err)
+		return nil, fmt.Errorf("failed to read log file %v", err)
 	}
 	defer file.Close()
 
@@ -154,24 +118,66 @@ func parseFile(path string) (entries []LogEntry, err error) {
 		var entry LogEntry
 
 		line := scanner.Text()
-		err = json.Unmarshal([]byte(line), &entry)
+		err := json.Unmarshal([]byte(line), &entry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse log line: %v", err)
+			return nil, fmt.Errorf("failed to parse log line %v:", err)
 		}
 
 		timestamp, err := time.Parse(time.RFC3339, entry.RawTimestamp)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse timestamp: %v", err)
+			return nil, fmt.Errorf("failed to parse timestamp %v:", err)
 		}
-		entry.Timestamp = timestamp
 		entry.RawLine = line
+		entry.Timestamp = timestamp
 
 		entries = append(entries, entry)
 	}
-	err = scanner.Err()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse file: %v", err)
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failed to parse file %v:", err)
 	}
 
 	return entries, nil
+}
+
+func matchesQueries(queries []Query, entry LogEntry) bool {
+	for _, query := range queries {
+		fn, ok := paramFilters[query.Key]
+		if !ok {
+			return false
+		}
+
+		match, err := fn(entry, query.Value)
+		if !match || err != nil {
+			return false
+		}
+	}
+
+	return true
+}
+
+var paramFilters = map[string]func(LogEntry, string) (bool, error){
+	"service": func(l LogEntry, q string) (bool, error) {
+		return strings.EqualFold(l.Service, q), nil
+	},
+	"level": func(l LogEntry, q string) (bool, error) {
+		return strings.EqualFold(l.Level, q), nil
+	},
+	"message": func(l LogEntry, q string) (bool, error) {
+		return strings.Contains(strings.ToLower(l.Message), strings.ToLower(q)), nil
+	},
+	"after": func(l LogEntry, q string) (bool, error) {
+		t, err := time.Parse(time.RFC3339, q)
+		if err != nil {
+			return false, err
+		}
+		return l.Timestamp.After(t), nil
+	},
+	"before": func(l LogEntry, q string) (bool, error) {
+		t, err := time.Parse(time.RFC3339, q)
+		if err != nil {
+			return false, err
+		}
+		return l.Timestamp.Before(t), nil
+	},
 }
