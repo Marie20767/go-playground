@@ -1,28 +1,48 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/Marie20767/go-playground/systems/batcher"
 )
 
+type Job struct {
+	ID    int
+	Query string
+}
+
+type Processor struct{}
+func (p *Processor) Process(jobs []Job) error {
+	for i, job := range jobs {
+		time.Sleep(100 * time.Millisecond)
+		log := fmt.Sprintf("processing job %d with id %d", i, job.ID)
+		fmt.Println(log)
+	}
+
+	return nil
+}
+
 func main() {
-	// datastructures.BSTSearchExamples()
-	// datastructures.MatrixExamples()
-	// concurrency.ConcurrencyExamples()
+	maxBatchSize := 3
+	jobs := []Job{
+		{ID: 1, Query: "INSERT INTO users (id, name) VALUES (1, 'Marie')"},
+		{ID: 2, Query: "INSERT INTO users (id, name) VALUES (2, 'Jamie')"},
+		{ID: 3, Query: "INSERT INTO users (id, name) VALUES (3, 'Alfie')"},
+	}
+	
+	b := batcher.New(&Processor{}, maxBatchSize)
 
-	// combinationsum.CombinationSum([]int{1, 2, 3}, 3)
-	b := batcher.New(func(jobs []batcher.Job) error {
-		for i, job := range jobs {
-			log := fmt.Sprintf("processing job %d with id %d", i, job.ID)
-			fmt.Println(log)
-		}
+	for _, job := range jobs {
+		b.Add(job)
+	}
 
-		return nil
-	})
-
-	b.Add(batcher.Job{ID: 1, Query: "INSERT INTO users (id, name) VALUES (1, 'Marie)"})
-	b.Add(batcher.Job{ID: 2, Query: "INSERT INTO users (id, name) VALUES (2, 'Jamie)"})
-	b.Add(batcher.Job{ID: 3, Query: "INSERT INTO users (id, name) VALUES (3, 'Tom)"})
 	b.Execute()
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancelCtx()
+	err := b.Close(ctx)
+	if err != nil {
+		fmt.Println("jobs unfinished")
+	}
 }
