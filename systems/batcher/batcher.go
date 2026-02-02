@@ -2,31 +2,39 @@ package batcher
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
-type BatchProcessor[T any] interface {
-	Process(jobs []T) error
+// TODO: timed version
+
+type BatchProcessor[J any] interface {
+	Process(jobs []J) error
 }
 
-type Batcher[T any] struct {
-	processor    BatchProcessor[T]
-	jobs         []T
+type Batcher[J any] struct {
+	processor    BatchProcessor[J]
+	jobs         []J
 	mu           sync.Mutex
 	wg           sync.WaitGroup
 	maxBatchSize int
+	failures     chan FailedBatch[J]
 }
 
-func New[T any](batchProcessor BatchProcessor[T], maxBatchSize int) *Batcher[T] {
-	return &Batcher[T]{
+type FailedBatch[J any] struct {
+	Jobs []J
+	Err  error
+}
+
+func New[J any](batchProcessor BatchProcessor[J], maxBatchSize int) *Batcher[J] {
+	return &Batcher[J]{
 		processor:    batchProcessor,
 		maxBatchSize: maxBatchSize,
-		jobs:         []T{},
+		jobs:         []J{},
+		failures:     make(chan FailedBatch[J], 100),
 	}
 }
 
-func (b *Batcher[T]) Add(j T) {
+func (b *Batcher[J]) Add(j J) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -37,34 +45,39 @@ func (b *Batcher[T]) Add(j T) {
 	}
 }
 
-func (b *Batcher[T]) Execute() {
+func (b *Batcher[J]) Execute() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.execute()
 }
 
-func (b *Batcher[T]) execute() {
+func (b *Batcher[J]) execute() {
 	if len(b.jobs) == 0 {
 		return
 	}
 
-	currentJobs := make([]T, len(b.jobs))
+	currentJobs := make([]J, len(b.jobs))
 	copy(currentJobs, b.jobs)
-	b.jobs = []T{}
+	b.jobs = []J{}
 
 	b.wg.Go(func() {
 		if err := b.processor.Process(currentJobs); err != nil {
-			fmt.Println("error processing batch", err)
+			b.failures <- FailedBatch[J]{
+				Jobs: currentJobs,
+				Err:  err,
+			}
 		}
 	})
 }
 
-func (b *Batcher[T]) Wait() {
+func (b *Batcher[J]) Wait() {
 	b.wg.Wait()
 }
 
-func (b *Batcher[T]) Close(ctx context.Context) error {
+func (b *Batcher[J]) Close(ctx context.Context) error {
 	done := make(chan struct{})
+
+	defer close(b.failures)
 
 	go func() {
 		b.Wait()
@@ -77,4 +90,8 @@ func (b *Batcher[T]) Close(ctx context.Context) error {
 	case <-done:
 		return nil
 	}
+}
+
+func (b *Batcher[J]) Error() <-chan FailedBatch[J] {
+	return b.failures
 }
