@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"log"
-	"math/rand"
+	"sync/atomic"
 	"time"
 
-	"github.com/Marie20767/go-playground/systems/batcher"
+	batcher "github.com/Marie20767/go-playground/systems/timedbatcher"
 )
 
 type Job struct {
@@ -15,37 +13,56 @@ type Job struct {
 	Query string
 }
 
-type Processor struct{}
+type Processor struct {
+	processed atomic.Int32
+	done      chan (struct{})
+}
 
 func (p *Processor) Process(jobs []Job) error {
-	time.Sleep(100 * time.Millisecond)
-	if rand.Intn(2) == 1 {
-		return errors.New("batch failed")
-	}
-
+	log.Printf("jobs to process: %v", len(jobs))
+	p.processed.Add(int32(len(jobs)))
+	p.done <- struct{}{}
 	return nil
 }
 
 func main() {
-	maxBatchSize := 3
+	batchSize := 10
+	waitTime := 500 * time.Millisecond
+	done := make(chan struct{})
+	processor := Processor{done: done}
+	batcher := batcher.New(&processor, batchSize, waitTime)
 	jobs := []Job{
-		{ID: 1, Query: "INSERT INTO users (id, name) VALUES (1, 'Marie')"},
-		{ID: 2, Query: "INSERT INTO users (id, name) VALUES (2, 'Jamie')"},
-		{ID: 3, Query: "INSERT INTO users (id, name) VALUES (3, 'Alfie')"},
+		{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 4, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 5, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 6, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 7, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 8, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 9, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 10, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 11, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 12, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 	}
-
-	b := batcher.New(&Processor{}, maxBatchSize)
 
 	for _, job := range jobs {
-		b.Add(job)
+		batcher.Add(job)
 	}
 
-	b.Execute()
+	defer close(done)
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancelCtx()
-	err := b.Close(ctx)
-	if err != nil {
-		log.Printf("jobs failed to finish %v:", err)
+	select {
+	case <-time.After(waitTime + time.Second):
+		log.Println("failed to process 1st batch")
+	case <-processor.done:
+		log.Println("processed batch 1")
+	}
+
+	select {
+	case <-time.After(waitTime + time.Second):
+		log.Println("failed to process 2nd batch")
+	case <-processor.done:
+		log.Println("processed batch 2")
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Marie20767/go-playground/systems/batcher"
+	batcher "github.com/Marie20767/go-playground/systems/maxbatchbatcher"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,7 +49,7 @@ func setup(t *testing.T, maxBatchSize int, jobs []Job) (*Processor, *batcher.Bat
 	return processor, batcher
 }
 
-func TestBatcher(t *testing.T) {
+func TestBatcherMaxBatchSize(t *testing.T) {
 	t.Run("Executes batch immediately when batch size is exceeded", func(t *testing.T) {
 		maxBatchSize := 3
 		jobs := []Job{
@@ -62,7 +62,7 @@ func TestBatcher(t *testing.T) {
 
 		select {
 		case <-time.After(500 * time.Millisecond):
-			t.Fatal("Failed to call batch processing function")
+			t.Fatal("failed to call batch processing function")
 		case <-processor.done:
 			// test passes
 		}
@@ -139,7 +139,7 @@ func TestBatcher(t *testing.T) {
 
 		select {
 		case <-time.After(500 * time.Millisecond):
-			t.Fatal("Failed to read failed batch error")
+			t.Fatal("failed to read failed batch error")
 		case <-done:
 			// test passes
 		}

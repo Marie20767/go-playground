@@ -5,8 +5,6 @@ import (
 	"sync"
 )
 
-// TODO: timed version
-
 type BatchProcessor[J any] interface {
 	Process(jobs []J) error
 }
