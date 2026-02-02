@@ -1,7 +1,6 @@
 package batcher
 
 import (
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -42,7 +41,6 @@ func (b *Batcher[J]) Add(job J) {
 
 func (b *Batcher[J]) run() {
 	for range b.ticker.C {
-		fmt.Println(">>> executing...")
 		b.execute()
 	}
 }
@@ -63,8 +61,6 @@ func (b *Batcher[J]) execute() {
 	batch := []J{}
 	batch = append(batch, b.jobs[:batchSize]...)
 	b.jobs = b.jobs[batchSize:]
-
-	fmt.Println(">>> batch: ", len(batch))
 
 	go func() {
 		if err := b.processor.Process(batch); err != nil {
