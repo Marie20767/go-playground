@@ -2,7 +2,6 @@ package batcher
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 )
@@ -20,6 +19,12 @@ type Batcher[J any] struct {
 	mu        sync.Mutex
 	wg        sync.WaitGroup
 	closed    bool
+	failures  chan FailedBatch[J]
+}
+
+type FailedBatch[J any] struct {
+	Jobs []J
+	Err  error
 }
 
 func New[J any](processor BatchProcessor[J], batchSize int, waitTime time.Duration) *Batcher[J] {
@@ -30,6 +35,7 @@ func New[J any](processor BatchProcessor[J], batchSize int, waitTime time.Durati
 		ticker:    time.NewTicker(waitTime),
 		waitTime:  waitTime,
 		closed:    false,
+		failures:  make(chan FailedBatch[J], 100),
 	}
 
 	b.wg.Go(b.run)
@@ -80,7 +86,10 @@ func (b *Batcher[J]) execute() {
 
 	b.wg.Go(func() {
 		if err := b.processor.Process(batch); err != nil {
-			log.Printf("error processing batch %v", err)
+			b.failures <- FailedBatch[J]{
+				Jobs: batch,
+				Err:  err,
+			}
 		}
 	})
 }
@@ -95,6 +104,8 @@ func (b *Batcher[J]) Close(ctx context.Context) error {
 	b.mu.Unlock()
 	done := make(chan struct{})
 
+	defer close(b.failures)
+
 	go func() {
 		b.Wait()
 		close(done)
@@ -106,4 +117,8 @@ func (b *Batcher[J]) Close(ctx context.Context) error {
 	case <-done:
 		return nil
 	}
+}
+
+func (b *Batcher[J]) Error() <-chan FailedBatch[J] {
+	return b.failures
 }

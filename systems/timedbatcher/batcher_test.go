@@ -2,6 +2,7 @@ package batcher_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sync/atomic"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO: error handling
+var ErrBatchFailed = errors.New("batch failed")
 
 type Job struct {
 	ID    int
@@ -27,6 +28,11 @@ type ProcessCloseJobs struct {
 	processed atomic.Int32
 }
 
+type ProcessErr struct {
+	done      chan (struct{})
+	processed atomic.Int32
+}
+
 func (p *Processor) Process(jobs []Job) error {
 	log.Printf("jobs to process: %v", len(jobs))
 	p.processed.Add(int32(len(jobs)))
@@ -38,6 +44,10 @@ func (p *ProcessCloseJobs) Process(jobs []Job) error {
 	log.Printf("jobs to process: %v", len(jobs))
 	p.processed.Add(int32(len(jobs)))
 	return nil
+}
+
+func (p *ProcessErr) Process(jobs []Job) error {
+	return ErrBatchFailed
 }
 
 func TestTimedBatcher(t *testing.T) {
@@ -133,6 +143,41 @@ func TestTimedBatcher(t *testing.T) {
 		assert.Equal(t, int32(len(jobs)), processor.processed.Load())
 	})
 
-	t.Run("Returns batch error with failed jobs", func(t *testing.T) {})
+	t.Run("Returns batch error with failed jobs", func(t *testing.T) {
+		batchSize := 10
+		waitTime := 50 * time.Millisecond
+		jobs := []Job{
+			{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		}
+		processor := &ProcessErr{}
+		batcher := batcher.New(processor, batchSize, waitTime)
+		assert.Zero(t, processor.processed.Load())
 
+		for _, job := range jobs {
+			batcher.Add(job)
+		}
+
+		done := make(chan struct{})
+
+		go func() {
+			defer close(done)
+			for failure := range batcher.Error() {
+				assert.Equal(t, len(jobs), len(failure.Jobs))
+				assert.Equal(t, failure.Err, ErrBatchFailed)
+			}
+		}()
+
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancelCtx()
+		batcher.Close(ctx)
+
+		select {
+		case <-time.After(500 * time.Millisecond):
+			t.Fatal("failed to read failed batch error")
+		case <-done:
+			// test passes
+		}
+	})
 }
