@@ -1,6 +1,7 @@
 package batcher_test
 
 import (
+	"context"
 	"log"
 	"sync/atomic"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO: graceful shutdown
 // TODO: error handling
 
 type Job struct {
@@ -23,10 +23,20 @@ type Processor struct {
 	done      chan (struct{})
 }
 
+type ProcessCloseJobs struct {
+	processed atomic.Int32
+}
+
 func (p *Processor) Process(jobs []Job) error {
 	log.Printf("jobs to process: %v", len(jobs))
 	p.processed.Add(int32(len(jobs)))
 	p.done <- struct{}{}
+	return nil
+}
+
+func (p *ProcessCloseJobs) Process(jobs []Job) error {
+	log.Printf("jobs to process: %v", len(jobs))
+	p.processed.Add(int32(len(jobs)))
 	return nil
 }
 
@@ -76,9 +86,52 @@ func TestTimedBatcher(t *testing.T) {
 		}
 	})
 
-	t.Run("Jobs are completed on close", func(t *testing.T) {})
+	t.Run("Context cancellation returns error before jobs completion", func(t *testing.T) {
+		batchSize := 10
+		waitTime := 500 * time.Millisecond
+		jobs := []Job{
+			{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		}
+		processor := &Processor{}
+		batcher := batcher.New(processor, batchSize, waitTime)
+		assert.Zero(t, processor.processed.Load())
 
-	t.Run("Context cancellation returns error before jobs completion", func(t *testing.T) {})
+		for _, job := range jobs {
+			batcher.Add(job)
+		}
+
+		ctx, cancelCtx := context.WithTimeout(t.Context(), 1*time.Nanosecond)
+		defer cancelCtx()
+		err := batcher.Close(ctx)
+		assert.NotNil(t, err)
+		assert.Zero(t, processor.processed.Load())
+	})
+
+	t.Run("Jobs are completed on close", func(t *testing.T) {
+		batchSize := 10
+		waitTime := 50 * time.Millisecond
+		jobs := []Job{
+			{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		}
+		processor := &ProcessCloseJobs{}
+		batcher := batcher.New(processor, batchSize, waitTime)
+		assert.Zero(t, processor.processed.Load())
+
+		for _, job := range jobs {
+			batcher.Add(job)
+		}
+
+		ctx, cancelCtx := context.WithTimeout(t.Context(), 500*time.Millisecond)
+		defer cancelCtx()
+
+		err := batcher.Close(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, int32(len(jobs)), processor.processed.Load())
+	})
 
 	t.Run("Returns batch error with failed jobs", func(t *testing.T) {})
 
