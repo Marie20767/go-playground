@@ -111,6 +111,9 @@ func (b *Batcher[J]) Close(ctx context.Context) error {
 		close(done)
 	}()
 
+	// Note: currently if context is cancelled the done channel wouldn't close
+	// Solution: add context & cancelCtx to batcher, call b.cancelCtx() and listen to ctx.Done() in BatchProcessor.Process
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

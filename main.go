@@ -23,6 +23,7 @@ type Processor struct {
 func (p *Processor) Process(jobs []Job) error {
 	log.Printf("jobs to process: %v", len(jobs))
 	p.processed.Add(int32(len(jobs)))
+
 	return nil
 }
 
