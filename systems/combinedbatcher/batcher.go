@@ -11,15 +11,15 @@ type BatchProcessor[J any] interface {
 }
 
 type Batcher[J any] struct {
-	processor BatchProcessor[J]
-	jobs      []J
-	batchSize int
-	waitTime  time.Duration
-	ticker    *time.Ticker
-	mu        sync.Mutex
-	wg        sync.WaitGroup
-	closed    bool
-	failures  chan FailedBatch[J]
+	processor    BatchProcessor[J]
+	jobs         []J
+	maxBatchSize int
+	waitTime     time.Duration
+	ticker       *time.Ticker
+	mu           sync.Mutex
+	wg           sync.WaitGroup
+	closed       bool
+	failures     chan FailedBatch[J]
 }
 
 type FailedBatch[J any] struct {
@@ -27,15 +27,15 @@ type FailedBatch[J any] struct {
 	Err  error
 }
 
-func New[J any](processor BatchProcessor[J], batchSize int, waitTime time.Duration) *Batcher[J] {
+func New[J any](processor BatchProcessor[J], maxBatchSize int, waitTime time.Duration) *Batcher[J] {
 	b := &Batcher[J]{
-		processor: processor,
-		jobs:      []J{},
-		batchSize: batchSize,
-		ticker:    time.NewTicker(waitTime),
-		waitTime:  waitTime,
-		closed:    false,
-		failures:  make(chan FailedBatch[J], 100),
+		processor:    processor,
+		jobs:         []J{},
+		maxBatchSize: maxBatchSize,
+		ticker:       time.NewTicker(waitTime),
+		waitTime:     waitTime,
+		closed:       false,
+		failures:     make(chan FailedBatch[J], 100),
 	}
 
 	b.wg.Go(b.run)
@@ -52,39 +52,35 @@ func (b *Batcher[J]) Add(job J) {
 	}
 
 	b.jobs = append(b.jobs, job)
+
+	if len(b.jobs) >= b.maxBatchSize {
+		b.execute()
+	}
 }
 
 func (b *Batcher[J]) run() {
 	defer b.ticker.Stop()
 
 	for range b.ticker.C {
-		b.execute()
-		if b.shouldEndRun() {
-			return
-		}
+		b.executeLock()
 	}
 }
 
-func (b *Batcher[J]) shouldEndRun() bool {
+func (b *Batcher[J]) executeLock() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return b.closed && len(b.jobs) == 0
+	b.execute()
 }
 
 func (b *Batcher[J]) execute() {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	if len(b.jobs) == 0 {
 		return
 	}
 
-	batchSize := min(len(b.jobs), b.batchSize)
-
-	batch := []J{}
-	batch = append(batch, b.jobs[:batchSize]...)
-	b.jobs = b.jobs[batchSize:]
+	batch := make([]J, len(b.jobs))
+	copy(batch, b.jobs)
+	b.jobs = []J{}
 
 	b.wg.Go(func() {
 		if err := b.processor.Process(batch); err != nil {
@@ -101,11 +97,15 @@ func (b *Batcher[J]) wait() {
 }
 
 func (b *Batcher[J]) Close(ctx context.Context) error {
+	b.ticker.Stop()
 	b.mu.Lock()
 	b.closed = true
+	b.execute()
 	b.mu.Unlock()
+
 	done := make(chan struct{})
 
+	// Note: this would panic if Close() is called again, add channel closure check and return error
 	defer close(b.failures)
 
 	go func() {

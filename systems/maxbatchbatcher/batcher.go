@@ -68,7 +68,7 @@ func (b *Batcher[J]) execute() {
 	})
 }
 
-func (b *Batcher[J]) Wait() {
+func (b *Batcher[J]) wait() {
 	b.wg.Wait()
 }
 
@@ -78,7 +78,7 @@ func (b *Batcher[J]) Close(ctx context.Context) error {
 	defer close(b.failures)
 
 	go func() {
-		b.Wait()
+		b.wait()
 		close(done)
 	}()
 
