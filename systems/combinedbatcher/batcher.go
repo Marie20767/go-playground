@@ -19,6 +19,7 @@ type Batcher[J any] struct {
 	mu           sync.Mutex
 	wg           sync.WaitGroup
 	closed       bool
+	done         chan struct{}
 	failures     chan FailedBatch[J]
 }
 
@@ -36,6 +37,7 @@ func New[J any](processor BatchProcessor[J], maxBatchSize int, waitTime time.Dur
 		waitTime:     waitTime,
 		closed:       false,
 		failures:     make(chan FailedBatch[J], 100),
+		done:         make(chan struct{}),
 	}
 
 	b.wg.Go(b.run)
@@ -61,7 +63,10 @@ func (b *Batcher[J]) Add(job J) {
 func (b *Batcher[J]) run() {
 	defer b.ticker.Stop()
 
-	for range b.ticker.C {
+	select {
+	case <-b.done:
+		return
+	case <-b.ticker.C:
 		b.executeLock()
 	}
 }
@@ -97,7 +102,7 @@ func (b *Batcher[J]) wait() {
 }
 
 func (b *Batcher[J]) Close(ctx context.Context) error {
-	b.ticker.Stop()
+	close(b.done)
 	b.mu.Lock()
 	b.closed = true
 	b.execute()

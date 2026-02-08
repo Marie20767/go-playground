@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync/atomic"
 	"time"
 
-	batcher "github.com/Marie20767/go-playground/systems/timedbatcher"
+	batcher "github.com/Marie20767/go-playground/systems/combinedbatcher"
 )
 
 type Job struct {
@@ -28,13 +27,26 @@ func (p *Processor) Process(jobs []Job) error {
 }
 
 func main() {
-	batchSize := 10
-	waitTime := 50 * time.Millisecond
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelCtx()
+
+	batchSize := 3
+	waitTime := 1 * time.Second
 	jobs := []Job{
 		{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 		{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 		{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 4, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 5, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 6, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 7, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 8, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 9, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 10, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 11, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		{ID: 12, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 	}
+
 	processor := &Processor{}
 	batcher := batcher.New(processor, batchSize, waitTime)
 
@@ -42,9 +54,5 @@ func main() {
 		batcher.Add(job)
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancelCtx()
-
-	err := batcher.Close(ctx)
-	fmt.Println(">>> err: ", err)
+	batcher.Close(ctx)
 }

@@ -27,6 +27,15 @@ func (p *Processor) Process(jobs []Job) error {
 	return nil
 }
 
+type ProcessorClose struct {
+	processed atomic.Int32
+}
+
+func (p *ProcessorClose) Process(jobs []Job) error {
+	p.processed.Add(int32(len(jobs)))
+	return nil
+}
+
 func TestCombinedBatcher(t *testing.T) {
 	t.Run("Executes batch immediately", func(t *testing.T) {
 		maxBatchSize := 10
@@ -83,10 +92,48 @@ func TestCombinedBatcher(t *testing.T) {
 	})
 
 	t.Run("Does not add any new jobs on close", func(t *testing.T) {
+		batchSize := 1
+		waitTime := 1 * time.Second
+		job := Job{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"}
 
+		processor := &ProcessorClose{}
+		batcher := batcher.New(processor, batchSize, waitTime)
+		assert.Zero(t, processor.processed.Load())
+
+		batcher.Add(job)
+
+		batcher.Close(t.Context())
+		batcher.Add(Job{ID: 2, Query: ""})
+		assert.Equal(t, int32(1), processor.processed.Load())
 	})
 
 	t.Run("Executes remaining batch on close", func(t *testing.T) {
+		batchSize := 3
+		waitTime := 1 * time.Second
+		jobs := []Job{
+			{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 4, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 5, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 6, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 7, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 8, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 9, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 10, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 11, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+			{ID: 12, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
+		}
 
+		processor := &ProcessorClose{}
+		batcher := batcher.New(processor, batchSize, waitTime)
+		assert.Zero(t, processor.processed.Load())
+
+		for _, job := range jobs {
+			batcher.Add(job)
+		}
+
+		batcher.Close(t.Context())
+		assert.Equal(t, int32(len(jobs)), processor.processed.Load())
 	})
 }

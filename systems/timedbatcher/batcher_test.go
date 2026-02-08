@@ -24,11 +24,11 @@ type Processor struct {
 	done      chan (struct{})
 }
 
-type ProcessCloseJobs struct {
+type ProcessorCloseJobs struct {
 	processed atomic.Int32
 }
 
-type ProcessErr struct {
+type ProcessorErr struct {
 	done      chan (struct{})
 	processed atomic.Int32
 }
@@ -40,13 +40,13 @@ func (p *Processor) Process(jobs []Job) error {
 	return nil
 }
 
-func (p *ProcessCloseJobs) Process(jobs []Job) error {
+func (p *ProcessorCloseJobs) Process(jobs []Job) error {
 	log.Printf("jobs to process: %v", len(jobs))
 	p.processed.Add(int32(len(jobs)))
 	return nil
 }
 
-func (p *ProcessErr) Process(jobs []Job) error {
+func (p *ProcessorErr) Process(jobs []Job) error {
 	return ErrBatchFailed
 }
 
@@ -127,7 +127,7 @@ func TestTimedBatcher(t *testing.T) {
 			{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 			{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 		}
-		processor := &ProcessCloseJobs{}
+		processor := &ProcessorCloseJobs{}
 		batcher := batcher.New(processor, batchSize, waitTime)
 		assert.Zero(t, processor.processed.Load())
 
@@ -151,7 +151,7 @@ func TestTimedBatcher(t *testing.T) {
 			{ID: 2, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 			{ID: 3, Query: "INSERT INTO USERS (name) VALUES ('Marie')"},
 		}
-		processor := &ProcessErr{}
+		processor := &ProcessorErr{}
 		batcher := batcher.New(processor, batchSize, waitTime)
 		assert.Zero(t, processor.processed.Load())
 
@@ -179,5 +179,21 @@ func TestTimedBatcher(t *testing.T) {
 		case <-done:
 			// test passes
 		}
+	})
+
+	t.Run("Does not add any new jobs on close", func(t *testing.T) {
+		batchSize := 1
+		waitTime := 1 * time.Second
+		job := Job{ID: 1, Query: "INSERT INTO USERS (name) VALUES ('Marie')"}
+
+		processor := &ProcessorCloseJobs{}
+		batcher := batcher.New(processor, batchSize, waitTime)
+		assert.Zero(t, processor.processed.Load())
+
+		batcher.Add(job)
+
+		batcher.Close(t.Context())
+		batcher.Add(Job{ID: 2, Query: ""})
+		assert.Equal(t, int32(1), processor.processed.Load())
 	})
 }
