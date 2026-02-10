@@ -83,14 +83,13 @@ func (b *Batcher[J]) execute() {
 		return
 	}
 
-	batch := make([]J, len(b.jobs))
-	copy(batch, b.jobs)
+	currentJobs := b.jobs
 	b.jobs = []J{}
 
 	b.wg.Go(func() {
-		if err := b.processor.Process(batch); err != nil {
+		if err := b.processor.Process(currentJobs); err != nil {
 			b.failures <- FailedBatch[J]{
-				Jobs: batch,
+				Jobs: currentJobs,
 				Err:  err,
 			}
 		}

@@ -54,8 +54,7 @@ func (b *Batcher[J]) execute() {
 		return
 	}
 
-	currentJobs := make([]J, len(b.jobs))
-	copy(currentJobs, b.jobs)
+	currentJobs := b.jobs
 	b.jobs = []J{}
 
 	b.wg.Go(func() {
